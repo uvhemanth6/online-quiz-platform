@@ -1,3 +1,5 @@
+// frontend/src/pages/TakeQuizPage.jsx  // Quiz taking interface
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
@@ -80,7 +82,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
         if (currentQuestionIndex < quiz.questions.length - 1) {
             setCurrentQuestionIndex(prev => prev + 1); // Move to next question
         } else {
-            handleSubmitQuiz(); // Submit quiz if all questions answered
+            handleSubmitQuiz();
         }
     };
 
@@ -114,7 +116,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
                 quizId: quiz._id,
                 score: score,
                 totalQuestions: quiz.questions.length,
-                userAnswers: selectedAnswers // Store user's answers for review
+                userAnswers: selectedAnswers
             };
             const res = await api.post('/results', resultData); // Send results to backend
             showMessage('Quiz submitted successfully!', 'success');

@@ -1,3 +1,5 @@
+// frontend/src/pages/QuizResultsPage.jsx // Displays results for a specific quiz submission
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
@@ -8,6 +10,9 @@ const QuizResultsPage = ({ navigate, resultId }) => {
     const [result, setResult] = useState(null);
     const [loadingResult, setLoadingResult] = useState(true);
     const [quiz, setQuiz] = useState(null); // To store quiz details for answer review
+    // New state to manage explanations for each question
+    const [explanations, setExplanations] = useState({}); // {questionIndex: "explanation text"}
+    const [explainingQuestionIndex, setExplainingQuestionIndex] = useState(null); // Tracks which question is being explained
 
     // Effect to fetch quiz result and associated quiz details
     useEffect(() => {
@@ -41,6 +46,58 @@ const QuizResultsPage = ({ navigate, resultId }) => {
             fetchResult();
         }
     }, [resultId, navigate, showMessage, loadingAuth, currentUser]); // Dependencies for useEffect
+
+    // --- Gemini API Integration: Explain Answer ---
+    const explainAnswerWithLLM = async (questionIndex, questionText, options, correctAnswer) => {
+        setExplainingQuestionIndex(questionIndex); // Set loading for this specific question
+        setExplanations(prev => ({ ...prev, [questionIndex]: 'Generating explanation...' })); // Show loading text
+
+        try {
+            const prompt = `Provide a concise explanation for the following multiple-choice question and its correct answer.
+            Question: "${questionText}"
+            Options: ${options.join(', ')}
+            Correct Answer: "${correctAnswer}"
+            Keep the explanation to 3-4 sentences.`;
+
+            console.log("Gemini API Request Prompt:", prompt); // Log the prompt
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = { contents: chatHistory };
+            console.log("Gemini API Request Payload:", JSON.stringify(payload, null, 2)); // Log the payload
+
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            console.log("Gemini API Raw Response:", response); // Log raw response object
+            const result = await response.json();
+            console.log("Gemini API Parsed Result:", result); // Log parsed JSON result
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const explanationText = result.candidates[0].content.parts[0].text;
+                console.log("Gemini API Generated Explanation Text:", explanationText);
+                setExplanations(prev => ({ ...prev, [questionIndex]: explanationText }));
+            } else {
+                setExplanations(prev => ({ ...prev, [questionIndex]: 'Failed to get explanation.' }));
+                console.error("Gemini API response structure unexpected:", result);
+            }
+        } catch (error) {
+            setExplanations(prev => ({ ...prev, [questionIndex]: `Error: ${error.message}` }));
+            console.error("Error calling Gemini API for explanation:", error);
+        } finally {
+            setExplainingQuestionIndex(null); // Clear loading state
+        }
+    };
+    // --- End Gemini API Integration ---
+
 
     // Show loading spinner while fetching data
     if (loadingAuth || loadingResult || !quiz) { // Wait for quiz data too for review
@@ -106,6 +163,35 @@ const QuizResultsPage = ({ navigate, resultId }) => {
                                     </li>
                                 ))}
                             </ul>
+                            {/* Gemini API button for explanation */}
+                            <div className="mt-4 text-right">
+                                <button
+                                    onClick={() => explainAnswerWithLLM(index, q.questionText, q.options, q.correctAnswer)}
+                                    disabled={explainingQuestionIndex === index}
+                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {explainingQuestionIndex === index ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Explaining...
+                                        </>
+                                    ) : (
+                                        <>
+                                            ✨ Explain Answer
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            {/* Display explanation if available */}
+                            {explanations[index] && (
+                                <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200 text-blue-800 text-sm">
+                                    <p className="font-semibold mb-1">Explanation:</p>
+                                    <p>{explanations[index]}</p>
+                                </div>
+                            )}
                         </div>
                     ))}
                 </div>

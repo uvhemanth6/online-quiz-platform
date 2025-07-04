@@ -1,3 +1,5 @@
+// frontend/src/App.jsx                   // Main application component, handles routing and context providers
+
 import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext'; // Import AuthProvider and useAuth hook
 import MessageBox from './components/MessageBox'; // Import MessageBox component
@@ -71,13 +73,10 @@ const App = () => {
 
     return (
         <div className="App min-h-screen flex flex-col">
-            {/* Navbar is always present */}
             <Navbar navigate={navigate} />
-            {/* Main content area, where page components are rendered */}
             <main className="flex-grow">
                 {PageComponent}
             </main>
-            {/* Message box for global notifications */}
             <MessageBox message={message} />
         </div>
     );

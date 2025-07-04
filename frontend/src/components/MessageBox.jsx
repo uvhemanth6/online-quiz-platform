@@ -1,3 +1,5 @@
+// frontend/src/components/MessageBox.jsx // Reusable toast/notification component
+
 import React from 'react';
 
 const MessageBox = ({ message }) => {

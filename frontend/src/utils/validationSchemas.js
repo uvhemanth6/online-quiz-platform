@@ -1,3 +1,5 @@
+// frontend/src/utils/validationSchemas.js // Yup schemas for form validation
+
 import * as yup from 'yup';
 
 // Schema for user registration form

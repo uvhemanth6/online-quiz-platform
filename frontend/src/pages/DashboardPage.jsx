@@ -1,3 +1,5 @@
+// frontend/src/pages/DashboardPage.jsx // User/Admin dashboard displaying quizzes
+
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
@@ -8,30 +10,54 @@ import api from '../api/axiosInstance'; // Import configured axios instance
 const DashboardPage = ({ navigate }) => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
     const [quizzes, setQuizzes] = useState([]);
+    const [allResults, setAllResults] = useState([]); // New state for all results
     const [loadingQuizzes, setLoadingQuizzes] = useState(true);
+    const [loadingAllResults, setLoadingAllResults] = useState(true); // New state for loading all results
 
     useEffect(() => {
-        const fetchQuizzes = async () => {
-            try {
-                const res = await api.get('/quizzes'); // Fetch all quizzes from backend
-                setQuizzes(res.data);
-            } catch (error) {
-                console.error("Error fetching quizzes: ", error.response?.data || error.message);
-                showMessage("Failed to load quizzes.", 'error');
-            } finally {
+        const fetchData = async () => {
+            // If authentication is still loading or no user is logged in,
+            // set loading states to false and return.
+            if (!currentUser) {
                 setLoadingQuizzes(false);
+                setLoadingAllResults(false);
+                return;
+            }
+
+            // Set loading states to true before fetching data
+            setLoadingQuizzes(true);
+            setLoadingAllResults(true);
+
+            try {
+                // Fetch quizzes
+                const quizzesRes = await api.get('/quizzes');
+                setQuizzes(quizzesRes.data);
+                setLoadingQuizzes(false);
+
+                // Fetch all results if the current user is an admin
+                // This data is crucial for the AdminQuizStatisticsComponent
+                if (currentUser.role === 'admin') {
+                    const resultsRes = await api.get('/results/all');
+                    setAllResults(resultsRes.data);
+                }
+                setLoadingAllResults(false);
+
+            } catch (error) {
+                console.error("Error fetching dashboard data: ", error.response?.data || error.message);
+                showMessage("Failed to load dashboard data.", 'error');
+                setLoadingQuizzes(false);
+                setLoadingAllResults(false);
             }
         };
 
-        if (!loadingAuth && currentUser) { // Fetch quizzes only after auth state is known
-            fetchQuizzes();
-        } else if (!loadingAuth && !currentUser) {
-            setLoadingQuizzes(false); // If not logged in, no quizzes to fetch (or will be redirected)
+        // Only attempt to fetch data once authentication state is known
+        if (!loadingAuth) {
+            fetchData();
         }
     }, [currentUser, loadingAuth, showMessage]); // Re-fetch when currentUser or auth loading changes
 
-    // Show loading spinner while authenticating or fetching quizzes
-    if (loadingAuth || loadingQuizzes) {
+    // Show loading spinner while authenticating or fetching dashboard data
+    if (loadingAuth || loadingQuizzes || loadingAllResults) {
         return <LoadingSpinner />;
     }
 
@@ -137,7 +163,8 @@ const DashboardPage = ({ navigate }) => {
             {isAdmin && (
                 <div className="mt-12">
                     <h2 className="text-3xl font-bold text-purple-700 mb-6 text-center">All User Results</h2>
-                    <AdminQuizStatisticsComponent quizzes={quizzes} />
+                    {/* Pass both quizzes and allResults to the AdminQuizStatisticsComponent */}
+                    <AdminQuizStatisticsComponent quizzes={quizzes} allResults={allResults} />
                 </div>
             )}
         </div>

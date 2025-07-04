@@ -1,3 +1,5 @@
+// frontend/src/pages/CreateEditQuizPage.jsx// Form for creating or editing quizzes (Admin only)
+
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -9,6 +11,8 @@ import api from '../api/axiosInstance'; // Import configured axios instance
 const CreateEditQuizPage = ({ navigate, quizIdToEdit }) => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
     const [loading, setLoading] = useState(true);
+    const [generatingQuestions, setGeneratingQuestions] = useState(false); // New state for LLM loading
+    const [questionsGeneratedSuccessfully, setQuestionsGeneratedSuccessfully] = useState(false); // New state for UI feedback
 
     // Default values for the form, used when creating a new quiz
     const defaultQuizData = {
@@ -20,12 +24,14 @@ const CreateEditQuizPage = ({ navigate, quizIdToEdit }) => {
     };
 
     // Initialize react-hook-form with yup resolver and default values
-    const { register, handleSubmit, control, formState: { errors }, reset, watch } = useForm({
+    const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm({
         resolver: yupResolver(quizSchema),
         defaultValues: defaultQuizData // Start with default structure
     });
 
     const questions = watch('questions'); // Watch the questions array for dynamic updates in the UI
+    const quizTitle = watch('title'); // Watch quiz title for question generation
+    const quizCategory = watch('category'); // Watch quiz category for question generation
 
     // Effect to fetch quiz data when editing an existing quiz
     useEffect(() => {
@@ -45,35 +51,25 @@ const CreateEditQuizPage = ({ navigate, quizIdToEdit }) => {
             };
             fetchQuiz();
         } else {
-            setLoading(false); // No quiz to load for creation, so stop loading
-            reset(defaultQuizData); // Ensure default values are applied for new quiz
+            // For new quizzes, defaultValues in useForm already handle initial state.
+            // No need to call reset here, as it would clear user input on re-renders.
+            setLoading(false);
         }
     }, [quizIdToEdit, navigate, showMessage, reset]); // Dependencies for useEffect
 
-    // Show loading spinner while authenticating or loading quiz data
-    if (loadingAuth || loading) {
-        return <LoadingSpinner />;
-    }
-
-    // Access control: only admins can create/edit quizzes
-    if (!currentUser || currentUser.role !== 'admin') {
-        return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-red-600 text-xl">Access Denied: Admins only.</div>
-            </div>
-        );
-    }
 
     // Function to add a new empty question to the form
     const addQuestion = () => {
         const newQuestions = [...questions, { questionText: '', options: ['', '', '', ''], correctAnswer: '' }];
-        reset({ ...watch(), questions: newQuestions }); // Update form state with new question
+        setValue('questions', newQuestions); // Use setValue to update array directly
+        setQuestionsGeneratedSuccessfully(false); // Reset feedback on manual add
     };
 
     // Function to remove a question from the form by index
     const removeQuestion = (index) => {
         const newQuestions = questions.filter((_, i) => i !== index);
-        reset({ ...watch(), questions: newQuestions }); // Update form state
+        setValue('questions', newQuestions); // Use setValue to update array directly
+        setQuestionsGeneratedSuccessfully(false); // Reset feedback on manual remove
     };
 
     // Handle form submission (create or update quiz)
@@ -94,6 +90,109 @@ const CreateEditQuizPage = ({ navigate, quizIdToEdit }) => {
             showMessage(`Failed to save quiz: ${error.response?.data?.message || error.message}`, 'error');
         }
     };
+
+    // --- Gemini API Integration: Generate Questions ---
+    const generateQuestionsWithLLM = async () => {
+        // First, validate the basic quiz details (title, category) before calling LLM
+        // This prevents unnecessary API calls if essential info is missing.
+        if (!quizTitle || !quizCategory) {
+            showMessage('Please enter a Quiz Title and Category to generate questions.', 'info');
+            return;
+        }
+
+        setGeneratingQuestions(true);
+        setQuestionsGeneratedSuccessfully(false); // Reset success feedback
+        showMessage('Generating questions with AI...', 'info');
+
+        try {
+            // Modified prompt to generate 10 questions
+            const prompt = `Generate 10 multiple-choice quiz questions about "${quizTitle}" in the category of "${quizCategory}".
+            Each question should have 4 options, and one correct answer.
+            Provide the output as a JSON array of objects, where each object has:
+            - "questionText": string
+            - "options": string[] (array of 4 strings)
+            - "correctAnswer": string (must exactly match one of the options)
+            Ensure the JSON is valid and only contains the array of questions.`;
+
+            console.log("Gemini API Request Prompt:", prompt); // Log the prompt
+            let chatHistory = [];
+            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+            const payload = {
+                contents: chatHistory,
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "questionText": { "type": "STRING" },
+                                "options": { "type": "ARRAY", "items": { "type": "STRING" } },
+                                "correctAnswer": { "type": "STRING" }
+                            },
+                            "required": ["questionText", "options", "correctAnswer"]
+                        }
+                    }
+                }
+            };
+            console.log("Gemini API Request Payload:", JSON.stringify(payload, null, 2)); // Log the payload
+
+            // IMPORTANT: Replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API key
+            // You can get one from Google AI Studio: https://aistudio.google.com/app/apikey
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            console.log("Gemini API Raw Response:", response); // Log raw response object
+            const result = await response.json();
+            console.log("Gemini API Parsed Result:", result); // Log parsed JSON result
+
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const jsonString = result.candidates[0].content.parts[0].text;
+                console.log("Gemini API Generated JSON String:", jsonString);
+                const generatedQuestions = JSON.parse(jsonString);
+
+                // Update the form's questions array with the generated questions
+                setValue('questions', generatedQuestions);
+                setQuestionsGeneratedSuccessfully(true); // Set success feedback
+
+                // *** NEW: Programmatically submit the form after questions are generated ***
+                // This will trigger validation and then call onSubmit if valid.
+                handleSubmit(onSubmit)();
+
+            } else {
+                showMessage('Failed to generate questions. Please try again. Check console for details.', 'error');
+                console.error("Gemini API response structure unexpected:", result);
+            }
+        } catch (error) {
+            showMessage(`Error generating questions: ${error.message}`, 'error');
+            console.error("Error calling Gemini API:", error);
+        } finally {
+            setGeneratingQuestions(false);
+        }
+    };
+    // --- End Gemini API Integration ---
+
+
+    if (loadingAuth || loading) {
+        return <LoadingSpinner />;
+    }
+
+    if (!currentUser || currentUser.role !== 'admin') {
+        return (
+            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
+                <div className="text-center text-red-600 text-xl">Access Denied: Admins only.</div>
+            </div>
+        );
+    }
 
     return (
         <div className="container py-8 bg-gray-50 min-h-[calc(100vh-80px)]">
@@ -145,8 +244,40 @@ const CreateEditQuizPage = ({ navigate, quizIdToEdit }) => {
                     </div>
                 </div>
 
+                {/* Gemini API button for question generation */}
+                <div className="text-center">
+                    <button
+                        type="button"
+                        onClick={generateQuestionsWithLLM}
+                        disabled={generatingQuestions}
+                        className="bg-purple-500 text-white px-6 py-3 rounded-md hover:bg-purple-600 font-bold shadow-md flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {generatingQuestions ? (
+                            <>
+                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                Generating...
+                            </>
+                        ) : (
+                            <>
+                                ✨ Generate up to 10 Questions with AI
+                            </>
+                        )}
+                    </button>
+                </div>
+
+
                 {/* Questions Section */}
                 <h2 className="text-2xl font-bold text-purple-700 mb-4 pt-4 border-t border-gray-200">Questions</h2>
+                {/* Visual feedback for generated questions */}
+                {questionsGeneratedSuccessfully && (
+                    <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
+                        <strong className="font-bold">Success!</strong>
+                        <span className="block sm:inline ml-2">Questions have been generated and populated. If all other quiz details are filled, the quiz has been automatically saved. Otherwise, please fill missing details and click "Create Quiz" or "Update Quiz" to save.</span>
+                    </div>
+                )}
                 {errors.questions && <p className="text-red-500 text-sm mb-4">{errors.questions.message}</p>}
 
                 {questions && questions.map((question, qIndex) => (

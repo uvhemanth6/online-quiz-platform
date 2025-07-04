@@ -1,3 +1,5 @@
+// frontend/src/components/Navbar.jsx   // Navigation bar component
+
 import React from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 
