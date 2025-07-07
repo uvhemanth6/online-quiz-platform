@@ -10,14 +10,18 @@ import api from '../api/axiosInstance'; // Import configured axios instance
 const DashboardPage = ({ navigate }) => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
     const [quizzes, setQuizzes] = useState([]);
-    const [allResults, setAllResults] = useState([]); // New state for all results
+    const [allResults, setAllResults] = useState([]); // State to hold all quiz results for admin stats
     const [loadingQuizzes, setLoadingQuizzes] = useState(true);
-    const [loadingAllResults, setLoadingAllResults] = useState(true); // New state for loading all results
+    const [loadingAllResults, setLoadingAllResults] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
-            // If authentication is still loading or no user is logged in,
-            // set loading states to false and return.
+            // If authentication is still loading, wait for it.
+            if (loadingAuth) {
+                return;
+            }
+
+            // If no user is logged in after auth loads, set loading states to false and return.
             if (!currentUser) {
                 setLoadingQuizzes(false);
                 setLoadingAllResults(false);
@@ -50,10 +54,7 @@ const DashboardPage = ({ navigate }) => {
             }
         };
 
-        // Only attempt to fetch data once authentication state is known
-        if (!loadingAuth) {
-            fetchData();
-        }
+        fetchData(); // Call fetchData on component mount and when dependencies change
     }, [currentUser, loadingAuth, showMessage]); // Re-fetch when currentUser or auth loading changes
 
     // Show loading spinner while authenticating or fetching dashboard data
@@ -77,7 +78,12 @@ const DashboardPage = ({ navigate }) => {
         if (window.confirm(`Are you sure you want to delete "${quizTitle}"?`)) { // Confirmation dialog
             try {
                 await api.delete(`/quizzes/${quizId}`); // Delete quiz via API
-                setQuizzes(quizzes.filter(q => q._id !== quizId)); // Optimistically update UI
+                setQuizzes(prevQuizzes => prevQuizzes.filter(q => q._id !== quizId)); // Optimistically update UI
+                // Also re-fetch all results to update statistics
+                if (isAdmin) {
+                    const resultsRes = await api.get('/results/all');
+                    setAllResults(resultsRes.data);
+                }
                 showMessage('Quiz deleted successfully!', 'success');
             } catch (error) {
                 console.error("Error deleting quiz:", error.response?.data || error.message);
