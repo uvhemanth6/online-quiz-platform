@@ -1,5 +1,8 @@
+// backend/routes/authRoutes.js
+// API routes for authentication
+
 const express = require('express');
-const { registerUser, loginUser, getUserProfile } = require('../controllers/authController');
+const { registerUser, loginUser, getUserProfile, logoutUser } = require('../controllers/authController'); // Import logoutUser
 const { protect } = require('../middleware/auth');
 const { check } = require('express-validator'); // For input validation
 
@@ -23,5 +26,6 @@ router.post(
     loginUser
 );
 router.get('/profile', protect, getUserProfile); // Protected route
+router.post('/logout', logoutUser); // New logout route
 
 module.exports = router;

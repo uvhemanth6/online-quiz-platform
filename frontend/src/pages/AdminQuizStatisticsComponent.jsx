@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+// No useNavigate or useParams needed here as it receives data via props
 
-// This component now receives quizzes and allResults as props from its parent (DashboardPage)
 const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
     // Log the incoming props for debugging
     console.log("AdminStats: Quizzes Prop:", quizzes);
@@ -35,7 +35,6 @@ const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
 
     // Aggregate results from 'allResults' into the 'quizStats'
     allResults.forEach(result => {
-        // --- FIX APPLIED HERE ---
         // Access result.quizId._id if quizId is an object (populated), otherwise use result.quizId directly
         const currentQuizId = result.quizId && typeof result.quizId === 'object' ? result.quizId._id : result.quizId;
 
@@ -87,8 +86,8 @@ const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
     console.log("AdminStats: Final Chart Data:", chartData);
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 mt-6">
-            <h3 className="text-2xl font-bold text-purple-700 mb-4">Overall Quiz Performance</h3>
+        <div className="bg-white p-6 rounded-xl shadow-md border border-primary-100 mt-6">
+            <h3 className="text-2xl font-bold text-primary-700 mb-4">Overall Quiz Performance</h3>
 
             {/* Bar Chart for Average Scores */}
             <div className="mb-8" style={{ width: '100%', height: 300 }}>
@@ -108,7 +107,15 @@ const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
                             <YAxis domain={[0, 100]} label={{ value: 'Average Score (%)', angle: -90, position: 'insideLeft' }} />
                             <Tooltip formatter={(value) => `${value}%`} />
                             <Legend />
-                            <Bar dataKey="Average Score (%)" fill="#8884d8" />
+                            {/* Define the gradient for the bars */}
+                            <defs>
+                                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/> {/* primary-500 */}
+                                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0.8}/> {/* primary-400 */}
+                                </linearGradient>
+                            </defs>
+                            {/* Apply the gradient fill to the bars */}
+                            <Bar dataKey="Average Score (%)" fill="url(#colorUv)" />
                         </BarChart>
                     </ResponsiveContainer>
                 ) : (
@@ -116,21 +123,21 @@ const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
                 )}
             </div>
 
-            <h3 className="text-2xl font-bold text-purple-700 mt-8 mb-4">All User Submissions</h3>
+            <h3 className="text-2xl font-bold text-primary-700 mt-8 mb-4">All User Submissions</h3>
             <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
+                <table className="min-w-full bg-white border border-primary-200 rounded-xl">
                     <thead>
-                        <tr className="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                        <tr className="bg-primary-100 text-primary-700 uppercase text-sm leading-normal">
                             <th className="py-3 px-6 text-left">User Name / Email</th>
                             <th className="py-3 px-6 text-left">Quiz</th>
                             <th className="py-3 px-6 text-left">Score</th>
                             <th className="py-3 px-6 text-left">Date</th>
                         </tr>
                     </thead>
-                    <tbody className="text-gray-700 text-sm">
+                    <tbody className="text-dark text-sm">
                         {/* Display individual user submissions */}
                         {allResults.map(result => (
-                            <tr key={result._id} className="border-b border-gray-200 hover:bg-gray-50">
+                            <tr key={result._id} className="border-b border-primary-200 hover:bg-primary-50">
                                 <td className="py-3 px-6 text-left whitespace-nowrap">
                                     {/* Display user name and email if populated by backend */}
                                     {result.userId ? `${result.userId.name} (${result.userId.email})` : 'N/A'}

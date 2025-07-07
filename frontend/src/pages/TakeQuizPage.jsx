@@ -4,9 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
 import api from '../api/axiosInstance'; // Import configured axios instance
+import { useNavigate, useParams } from 'react-router-dom'; // Import useNavigate and useParams
 
-const TakeQuizPage = ({ navigate, quizId }) => {
+const TakeQuizPage = () => { // Removed quizId from props
     const { currentUser, loadingAuth, showMessage } = useAuth();
+    const navigate = useNavigate(); // Initialize useNavigate hook
+    const { quizId } = useParams(); // Get quizId from URL parameters
     const [quiz, setQuiz] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [selectedAnswers, setSelectedAnswers] = useState({}); // Stores { questionIndex: 'selectedOptionText' }
@@ -18,6 +21,11 @@ const TakeQuizPage = ({ navigate, quizId }) => {
     // Effect to fetch quiz data when component mounts or quizId changes
     useEffect(() => {
         const fetchQuiz = async () => {
+            if (!quizId) {
+                showMessage('No quiz ID provided.', 'error');
+                navigate('/dashboard'); // Redirect if no quiz ID
+                return;
+            }
             try {
                 const res = await api.get(`/quizzes/${quizId}`); // Fetch quiz by ID from backend
                 const fetchedQuiz = res.data;
@@ -26,7 +34,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
             } catch (error) {
                 console.error("Error fetching quiz:", error.response?.data || error.message);
                 showMessage("Failed to load quiz.", 'error');
-                navigate('dashboard'); // Redirect to dashboard if quiz fetch fails
+                navigate('/dashboard'); // Redirect to dashboard if quiz fetch fails
             }
         };
 
@@ -64,7 +72,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
     if (!currentUser) {
         return (
             <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-red-600 text-xl">Please log in to take quizzes.</div>
+                <div className="text-center text-danger text-xl">Please log in to take quizzes.</div>
             </div>
         );
     }
@@ -120,7 +128,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
             };
             const res = await api.post('/results', resultData); // Send results to backend
             showMessage('Quiz submitted successfully!', 'success');
-            navigate('quiz-results', { resultId: res.data._id }); // Navigate to results page with the new result ID
+            navigate(`/quiz-results/${res.data._id}`); // Navigate to results page with the new result ID
         } catch (error) {
             console.error("Error submitting quiz results:", error.response?.data || error.message);
             showMessage(`Failed to submit quiz: ${error.response?.data?.message || error.message}`, 'error');
@@ -137,18 +145,18 @@ const TakeQuizPage = ({ navigate, quizId }) => {
     const currentQuestion = quiz.questions[currentQuestionIndex]; // Get the current question object
 
     return (
-        <div className="container py-8 bg-gray-50 min-h-[calc(100vh-80px)]">
-            <h1 className="text-4xl font-bold text-purple-700 mb-6 text-center">{quiz.title}</h1>
-            <p className="text-lg text-gray-600 mb-4 text-center">{quiz.description}</p>
+        <div className="container py-8 bg-light min-h-[calc(100vh-80px)]">
+            <h1 className="text-4xl font-bold text-primary-700 mb-6 text-center">{quiz.title}</h1>
+            <p className="text-lg text-dark mb-4 text-center">{quiz.description}</p>
 
             {/* Initial quiz start screen */}
             {!quizStarted && !quizFinished && (
-                <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-auto border border-gray-200">
-                    <p className="text-xl text-gray-700 mb-4">Duration: {quiz.duration} minutes</p>
-                    <p className="text-xl text-gray-700 mb-6">Total Questions: {quiz.questions.length}</p>
+                <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto border border-primary-200">
+                    <p className="text-xl text-dark mb-4">Duration: {quiz.duration} minutes</p>
+                    <p className="text-xl text-dark mb-6">Total Questions: {quiz.questions.length}</p>
                     <button
                         onClick={startQuiz}
-                        className="bg-blue-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-blue-700 font-semibold text-lg"
+                        className="bg-info text-white px-8 py-3 rounded-lg shadow-md hover:bg-blue-700 font-semibold text-lg"
                     >
                         Start Quiz
                     </button>
@@ -157,16 +165,16 @@ const TakeQuizPage = ({ navigate, quizId }) => {
 
             {/* Quiz taking interface */}
             {quizStarted && !quizFinished && (
-                <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-3xl mx-auto border border-gray-200 space-y-6">
-                    <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-200">
-                        <h2 className="text-2xl font-bold text-purple-700">Question {currentQuestionIndex + 1} of {quiz.questions.length}</h2>
-                        {/* Display time left, color changes to red when less than 60 seconds */}
-                        <div className={`text-xl font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-blue-600'}`}>
+                <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-primary-200 space-y-6">
+                    <div className="flex justify-between items-center mb-6 border-b pb-4 border-primary-200">
+                        <h2 className="text-2xl font-bold text-primary-700">Question {currentQuestionIndex + 1} of {quiz.questions.length}</h2>
+                        {/* Display time left, color changes to danger when less than 60 seconds */}
+                        <div className={`text-xl font-bold ${timeLeft < 60 ? 'text-danger' : 'text-info'}`}>
                             Time Left: {formatTime(timeLeft)}
                         </div>
                     </div>
 
-                    <p className="text-lg text-gray-800 mb-6">{currentQuestion.questionText}</p>
+                    <p className="text-lg text-dark mb-6">{currentQuestion.questionText}</p>
 
                     <div className="space-y-4">
                         {currentQuestion.options.map((option, index) => (
@@ -174,8 +182,8 @@ const TakeQuizPage = ({ navigate, quizId }) => {
                                 key={index}
                                 onClick={() => handleOptionSelect(option)}
                                 className={`w-full text-left p-4 rounded-md border text-lg transition duration-300 ${selectedAnswers[currentQuestionIndex] === option
-                                    ? 'bg-blue-200 border-blue-500 text-blue-800 shadow-md' // Style for selected option
-                                    : 'bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-gray-400' // Default style
+                                    ? 'bg-primary-200 border-primary-500 text-primary-800 shadow-md' // Style for selected option
+                                    : 'bg-light border-primary-300 text-dark hover:bg-primary-100 hover:border-primary-400' // Default style
                                     }`}
                             >
                                 {option}
@@ -193,7 +201,7 @@ const TakeQuizPage = ({ navigate, quizId }) => {
                         </button>
                         <button
                             onClick={handleNext}
-                            className="bg-purple-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-purple-700 font-semibold text-base"
+                            className="bg-primary-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-base"
                         >
                             {currentQuestionIndex === quiz.questions.length - 1 ? 'Submit Quiz' : 'Next'}
                         </button>
@@ -203,12 +211,12 @@ const TakeQuizPage = ({ navigate, quizId }) => {
 
             {/* Quiz completion message */}
             {quizFinished && (
-                <div className="text-center p-8 bg-white rounded-lg shadow-lg max-w-md mx-auto border border-gray-200">
-                    <h2 className="text-3xl font-bold text-green-600 mb-4">Quiz Completed!</h2>
-                    <p className="text-xl text-gray-700 mb-6">Your results are being processed and saved.</p>
+                <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto border border-primary-200">
+                    <h2 className="text-3xl font-bold text-secondary-600 mb-4">Quiz Completed!</h2>
+                    <p className="text-xl text-dark mb-6">Your results are being processed and saved.</p>
                     <button
-                        onClick={() => navigate('dashboard')}
-                        className="bg-purple-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-purple-700 font-semibold text-lg"
+                        onClick={() => navigate('/dashboard')} // Use React Router navigate
+                        className="bg-primary-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-lg"
                     >
                         Go to Dashboard
                     </button>

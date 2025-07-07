@@ -1,3 +1,6 @@
+// backend/controllers/authController.js
+// Controller functions for authentication (registration, login, logout)
+
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { validationResult } = require('express-validator');
@@ -97,8 +100,19 @@ const getUserProfile = async (req, res, next) => {
     }
 };
 
+// @desc    Logout user (clear token client-side)
+// @route   POST /api/auth/logout
+// @access  Public (client-side token removal is primary, backend can acknowledge)
+const logoutUser = (req, res) => {
+    // For JWTs, logout is primarily client-side by removing the token.
+    // This backend endpoint simply acknowledges the logout request.
+    res.status(200).json({ message: 'Logged out successfully' });
+};
+
+
 module.exports = {
     registerUser,
     loginUser,
     getUserProfile,
+    logoutUser, // Export the new logout function
 };

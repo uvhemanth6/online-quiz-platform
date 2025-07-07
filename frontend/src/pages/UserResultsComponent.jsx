@@ -1,13 +1,16 @@
+// frontend/src/pages/UserResultsComponent.jsx // Component to list a user's past quiz results
 
 import React, { useState, useEffect } from 'react';
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth for showMessage
 import api from '../api/axiosInstance'; // Import configured axios instance
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 
-const UserResultsComponent = ({ userId, navigate }) => {
+const UserResultsComponent = ({ userId }) => { // Removed navigate from props
     const [userResults, setUserResults] = useState([]);
     const [loadingResults, setLoadingResults] = useState(true);
     const { showMessage } = useAuth(); // Access showMessage for notifications
+    const navigate = useNavigate(); // Initialize useNavigate hook
 
     useEffect(() => {
         const fetchUserResults = async () => {
@@ -29,24 +32,24 @@ const UserResultsComponent = ({ userId, navigate }) => {
     }
 
     if (userResults.length === 0) {
-        return <div className="text-center text-gray-600 text-md py-4">No results yet. Take a quiz to see your scores!</div>;
+        return <div className="text-center text-dark text-md py-4">No results yet. Take a quiz to see your scores!</div>;
     }
 
     return (
-        <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100 mt-6">
+        <div className="bg-white p-6 rounded-xl shadow-md border border-primary-100 mt-6">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {userResults.map(result => (
-                    <div key={result._id} className="border border-blue-200 p-4 rounded-lg bg-blue-50 shadow-sm flex flex-col justify-between">
+                    <div key={result._id} className="border border-info-200 p-4 rounded-xl bg-info-50 shadow-sm flex flex-col justify-between">
                         <div>
-                            <h4 className="text-lg font-bold text-blue-700 mb-1">{result.quizTitle || 'Unknown Quiz'}</h4>
-                            <p className="text-md text-gray-700">Score: {result.score} / {result.totalQuestions}</p>
+                            <h4 className="text-lg font-bold text-info-700 mb-1">{result.quizTitle || 'Unknown Quiz'}</h4>
+                            <p className="text-md text-dark">Score: {result.score} / {result.totalQuestions}</p>
                             <p className="text-sm text-gray-500">
                                 Submitted: {new Date(result.submittedAt).toLocaleDateString()}
                             </p>
                         </div>
                         <button
-                            onClick={() => navigate('quiz-results', { resultId: result._id })} // Navigate to detailed result page
-                            className="mt-3 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold"
+                            onClick={() => navigate(`/quiz-results/${result._id}`)} // Use React Router navigate with dynamic path
+                            className="mt-3 bg-info text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold"
                         >
                             View Details
                         </button>

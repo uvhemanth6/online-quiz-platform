@@ -1,7 +1,8 @@
+// frontend/src/api/axiosInstance.js // Axios instance for API calls (Node.js/JWT)
 
 import axios from 'axios';
 
-// Ensure this matches your backend server URL
+// This assumes your Node.js backend is running on port 5000
 const API_BASE_URL = 'http://localhost:5000/api';
 
 const api = axios.create({
@@ -11,14 +12,17 @@ const api = axios.create({
     },
 });
 
-// Add a request interceptor to include the JWT token
+// Request interceptor to attach JWT token from localStorage to every outgoing request
 api.interceptors.request.use(config => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token'); // Get the token from localStorage
     if (token) {
+        // Attach the token as a Bearer token in the Authorization header
         config.headers.Authorization = `Bearer ${token}`;
+        console.log("Axios Interceptor: Attached JWT token to request.");
     }
     return config;
 }, error => {
+    // Handle request errors
     return Promise.reject(error);
 });
 

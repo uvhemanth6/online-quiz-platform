@@ -4,9 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
 import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
 import api from '../api/axiosInstance'; // Import configured axios instance
+import { useNavigate, useParams } from 'react-router-dom'; // Import useNavigate and useParams
 
-const QuizResultsPage = ({ navigate, resultId }) => {
+const QuizResultsPage = () => { // Removed resultId from props
     const { currentUser, loadingAuth, showMessage } = useAuth();
+    const navigate = useNavigate(); // Initialize useNavigate hook
+    const { resultId } = useParams(); // Get resultId from URL parameters
     const [result, setResult] = useState(null);
     const [loadingResult, setLoadingResult] = useState(true);
     const [quiz, setQuiz] = useState(null); // To store quiz details for answer review
@@ -19,7 +22,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
         const fetchResult = async () => {
             if (!resultId) {
                 showMessage('No result ID provided.', 'error');
-                navigate('dashboard'); // Redirect if no result ID
+                navigate('/dashboard'); // Redirect if no result ID
                 setLoadingResult(false);
                 return;
             }
@@ -36,7 +39,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
             } catch (error) {
                 console.error("Error fetching result or quiz:", error.response?.data || error.message);
                 showMessage("Failed to load quiz results.", 'error');
-                navigate('dashboard'); // Redirect on error
+                navigate('/dashboard'); // Redirect on error
             } finally {
                 setLoadingResult(false); // Stop loading regardless of success/failure
             }
@@ -66,7 +69,13 @@ const QuizResultsPage = ({ navigate, resultId }) => {
             const payload = { contents: chatHistory };
             console.log("Gemini API Request Payload:", JSON.stringify(payload, null, 2)); // Log the payload
 
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+            // IMPORTANT: Replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API key
+            // You can get one from Google AI Studio: https://aistudio.google.com/app/apikey
+             const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // Access API key from environment variable
+            if (!apiKey) {
+                showMessage('Gemini API Key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.', 'error');
+                return;
+            }
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
             const response = await fetch(apiUrl, {
@@ -86,7 +95,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
                 console.log("Gemini API Generated Explanation Text:", explanationText);
                 setExplanations(prev => ({ ...prev, [questionIndex]: explanationText }));
             } else {
-                setExplanations(prev => ({ ...prev, [questionIndex]: 'Failed to get explanation.' }));
+                setExplanations(prev => ({ ...prev, [questionIndex]: 'Failed to get explanation. Check console for details.' }));
                 console.error("Gemini API response structure unexpected:", result);
             }
         } catch (error) {
@@ -108,7 +117,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
     if (!currentUser) {
         return (
             <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-red-600 text-xl">Please log in to view results.</div>
+                <div className="text-center text-danger text-xl">Please log in to view results.</div>
             </div>
         );
     }
@@ -117,7 +126,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
     if (!result) {
         return (
             <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-red-600 text-xl">Could not load quiz results.</div>
+                <div className="text-center text-danger text-xl">Could not load quiz results.</div>
             </div>
         );
     }
@@ -126,32 +135,32 @@ const QuizResultsPage = ({ navigate, resultId }) => {
     const percentage = ((result.score / result.totalQuestions) * 100).toFixed(2);
 
     return (
-        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gray-100 p-4">
-            <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-4xl mx-auto border border-gray-200">
-                <h2 className="text-4xl font-bold text-purple-700 mb-6 text-center">Quiz Results: {result.quizTitle}</h2>
-                <div className="text-center space-y-4 mb-8 pb-4 border-b border-gray-200">
-                    <p className="text-xl text-gray-800">Quiz: <span className="font-semibold text-indigo-600">{result.quizTitle || 'N/A'}</span></p>
-                    <p className="text-2xl font-bold text-green-600">Score: {result.score} / {result.totalQuestions}</p>
-                    <p className="text-3xl font-extrabold text-blue-600">Percentage: {percentage}%</p>
+        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-light p-4">
+            <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-4xl mx-auto border border-primary-200">
+                <h2 className="text-4xl font-bold text-primary-700 mb-6 text-center">Quiz Results: {result.quizTitle}</h2>
+                <div className="text-center space-y-4 mb-8 pb-4 border-b border-primary-200">
+                    <p className="text-xl text-dark">Quiz: <span className="font-semibold text-primary-600">{result.quizTitle || 'N/A'}</span></p>
+                    <p className="text-2xl font-bold text-secondary-600">Score: {result.score} / {result.totalQuestions}</p>
+                    <p className="text-3xl font-extrabold text-primary-600">Percentage: {percentage}%</p>
                     {result.submittedAt && (
                         <p className="text-sm text-gray-500">Submitted On: {new Date(result.submittedAt).toLocaleString()}</p>
                     )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-purple-700 mb-4">Your Answers Review</h3>
+                <h3 className="text-2xl font-bold text-primary-700 mb-4">Your Answers Review</h3>
                 <div className="space-y-6">
                     {/* Map through original quiz questions to display questions and user's answers */}
                     {quiz.questions.map((q, index) => (
-                        <div key={index} className="border border-gray-200 p-4 rounded-lg bg-gray-50">
-                            <p className="text-lg font-semibold text-gray-800 mb-2">Q{index + 1}: {q.questionText}</p>
-                            <ul className="list-disc list-inside space-y-1 text-gray-700">
+                        <div key={index} className="border border-primary-200 p-4 rounded-xl bg-primary-50">
+                            <p className="text-lg font-semibold text-dark mb-2">Q{index + 1}: {q.questionText}</p>
+                            <ul className="list-disc list-inside space-y-1 text-dark">
                                 {q.options.map((option, optIndex) => (
                                     <li key={optIndex} className={`${
-                                        // Highlight correct answer in green
-                                        option === q.correctAnswer ? 'text-green-600 font-bold' : ''
+                                        // Highlight correct answer in secondary (green)
+                                        option === q.correctAnswer ? 'text-secondary-600 font-bold' : ''
                                     } ${
-                                        // If user's answer and it's wrong, highlight in red and strike-through
-                                        result.userAnswers[index] === option && option !== q.correctAnswer ? 'text-red-600 line-through' : ''
+                                        // If user's answer and it's wrong, highlight in danger (red) and strike-through
+                                        result.userAnswers[index] === option && option !== q.correctAnswer ? 'text-danger line-through' : ''
                                     }`}>
                                         {option}
                                         {result.userAnswers[index] === option && (
@@ -168,11 +177,11 @@ const QuizResultsPage = ({ navigate, resultId }) => {
                                 <button
                                     onClick={() => explainAnswerWithLLM(index, q.questionText, q.options, q.correctAnswer)}
                                     disabled={explainingQuestionIndex === index}
-                                    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-info text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {explainingQuestionIndex === index ? (
                                         <>
-                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)" fill="none" viewBox="0 0 24 24">
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                             </svg>
@@ -187,7 +196,7 @@ const QuizResultsPage = ({ navigate, resultId }) => {
                             </div>
                             {/* Display explanation if available */}
                             {explanations[index] && (
-                                <div className="mt-4 p-3 bg-blue-50 rounded-md border border-blue-200 text-blue-800 text-sm">
+                                <div className="mt-4 p-3 bg-info-50 rounded-xl border border-info-200 text-info-800 text-sm">
                                     <p className="font-semibold mb-1">Explanation:</p>
                                     <p>{explanations[index]}</p>
                                 </div>
@@ -197,8 +206,8 @@ const QuizResultsPage = ({ navigate, resultId }) => {
                 </div>
 
                 <button
-                    onClick={() => navigate('dashboard')}
-                    className="mt-8 bg-purple-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-purple-700 font-semibold text-lg w-full"
+                    onClick={() => navigate('/dashboard')} // Use React Router navigate
+                    className="mt-8 bg-primary-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-lg w-full"
                 >
                     Back to Dashboard
                 </button>

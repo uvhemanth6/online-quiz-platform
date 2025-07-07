@@ -1,6 +1,7 @@
 // frontend/src/App.jsx                   // Main application component, handles routing and context providers
 
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom'; // Import React Router components
 import { AuthProvider, useAuth } from './contexts/AuthContext'; // Import AuthProvider and useAuth hook
 import MessageBox from './components/MessageBox'; // Import MessageBox component
 import LoadingSpinner from './components/LoadingSpinner'; // Import LoadingSpinner component
@@ -18,75 +19,49 @@ import NotFoundPage from './pages/NotFoundPage';
 
 // Main App component that handles routing and overall layout
 const App = () => {
-    // State to manage the current active page
-    const [currentPage, setCurrentPage] = useState('home');
-    // State to pass parameters to pages (e.g., quizId for TakeQuizPage)
-    const [pageParams, setPageParams] = useState({});
     // Get authentication loading status and message from AuthContext
-    const { loadingAuth, message } = useAuth();
-
-    // Navigation function to change pages and pass parameters
-    const navigate = (page, params = {}) => {
-        setCurrentPage(page);
-        setPageParams(params);
-    };
+    const { loadingAuth, message, showMessage } = useAuth();
 
     // Show a loading spinner if authentication is still in progress
     if (loadingAuth) {
         return <LoadingSpinner />;
     }
 
-    // Determine which page component to render based on currentPage state
-    let PageComponent;
-    switch (currentPage) {
-        case 'home':
-            PageComponent = <HomePage navigate={navigate} />;
-            break;
-        case 'login':
-            PageComponent = <LoginPage navigate={navigate} />;
-            break;
-        case 'register':
-            PageComponent = <RegisterPage navigate={navigate} />;
-            break;
-        case 'dashboard':
-            PageComponent = <DashboardPage navigate={navigate} />;
-            break;
-        case 'create-quiz':
-            PageComponent = <CreateEditQuizPage navigate={navigate} />;
-            break;
-        case 'edit-quiz':
-            // Pass quizIdToEdit parameter to the CreateEditQuizPage
-            PageComponent = <CreateEditQuizPage navigate={navigate} quizIdToEdit={pageParams.quizId} />;
-            break;
-        case 'take-quiz':
-            // Pass quizId parameter to the TakeQuizPage
-            PageComponent = <TakeQuizPage navigate={navigate} quizId={pageParams.quizId} />;
-            break;
-        case 'quiz-results':
-            // Pass resultId parameter to the QuizResultsPage
-            PageComponent = <QuizResultsPage navigate={navigate} resultId={pageParams.resultId} />;
-            break;
-        default:
-            // Render 404 page for unknown routes
-            PageComponent = <NotFoundPage navigate={navigate} />;
-    }
-
     return (
-        <div className="App min-h-screen flex flex-col">
-            <Navbar navigate={navigate} />
-            <main className="flex-grow">
-                {PageComponent}
+        // Apply overall themed background and min-height
+        <div className="App min-h-screen flex flex-col bg-light text-dark">
+            {/* Navbar will now use React Router's useNavigate hook internally */}
+            <Navbar />
+            <main className="flex-grow py-8"> {/* Added vertical padding for content */}
+                <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/register" element={<RegisterPage />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    <Route path="/create-quiz" element={<CreateEditQuizPage />} />
+                    {/* Route for editing a quiz, expects a quizId parameter */}
+                    <Route path="/edit-quiz/:quizId" element={<CreateEditQuizPage />} />
+                    {/* Route for taking a quiz, expects a quizId parameter */}
+                    <Route path="/take-quiz/:quizId" element={<TakeQuizPage />} />
+                    {/* Route for viewing quiz results, expects a resultId parameter */}
+                    <Route path="/quiz-results/:resultId" element={<QuizResultsPage />} />
+                    {/* Catch-all route for 404 Not Found */}
+                    <Route path="*" element={<NotFoundPage />} />
+                </Routes>
             </main>
-            <MessageBox message={message} />
+            {/* Pass message object and showMessage to MessageBox */}
+            {message && <MessageBox message={message} type={message.type} onClose={() => showMessage(null)} />}
         </div>
     );
 };
 
-// RootApp wraps the main App component with the AuthProvider
-// This makes authentication context available throughout the application
+// RootApp wraps the main App component with the AuthProvider and BrowserRouter
+// This makes authentication context and routing context available throughout the application
 const RootApp = () => (
     <AuthProvider>
-        <App />
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
     </AuthProvider>
 );
 

@@ -1,3 +1,6 @@
+// backend/server.js
+// Main entry point for the Express server
+
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
@@ -22,7 +25,7 @@ app.use(express.json()); // For parsing application/json
 // Import Routes
 const authRoutes = require('./routes/authRoutes');
 const quizRoutes = require('./routes/quizRoutes');
-const questionRoutes = require('./routes/questionRoutes');
+const questionRoutes = require('./routes/questionRoutes'); // This will likely be unused if questions are embedded directly in Quiz schema
 const resultRoutes = require('./routes/resultRoutes');
 const errorHandler = require('./middleware/errorHandler'); // Custom error handling middleware
 
