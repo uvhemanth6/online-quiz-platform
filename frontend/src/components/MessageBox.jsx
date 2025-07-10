@@ -36,12 +36,17 @@ const MessageBox = ({ message, onClose }) => {
 
     if (!message?.text && !isVisible) return null;
 
+    // Determine message type (success or error)
+    const isSuccess = message.type === 'success';
+    const bgColor = isSuccess ? 'bg-green-500' : 'bg-red-500';
+    const borderColor = isSuccess ? 'border-green-600' : 'border-red-600';
+
     return (
         <div className={`
             fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border
             transform transition-all duration-300 ease-out
             ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-            bg-secondary-500 border-secondary-600
+            ${bgColor} ${borderColor}
             min-w-[280px] max-w-sm
         `}>
             <div className="flex items-start justify-between gap-3">

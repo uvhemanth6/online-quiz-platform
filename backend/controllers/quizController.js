@@ -1,4 +1,8 @@
+// backend/controllers/quizController.js
+
 const Quiz = require('../models/Quiz');
+const Result = require('../models/Result'); // <<-- NEW: Import the Result model
+const User = require('../models/User'); // Assuming User model is also used/needed, keep existing imports
 
 // @desc    Get all quizzes
 // @route   GET /api/quizzes
@@ -93,18 +97,27 @@ const deleteQuiz = async (req, res, next) => {
     try {
         const quiz = await Quiz.findById(req.params.id);
 
-        if (quiz) {
-            // Check if user is the creator or an admin
-            if (quiz.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
-                return res.status(403).json({ message: 'Not authorized to delete this quiz' });
-            }
-            await quiz.deleteOne(); // Use deleteOne()
-            res.json({ message: 'Quiz removed' });
-        } else {
-            res.status(404).json({ message: 'Quiz not found' });
+        if (!quiz) {
+            return res.status(404).json({ message: 'Quiz not found' });
         }
+
+        // Check if user is the creator or an admin
+        if (quiz.createdBy.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Not authorized to delete this quiz' });
+        }
+
+        // --- NEW LOGIC: Delete all associated results for this quiz ---
+        const deleteResults = await Result.deleteMany({ quizId: req.params.id });
+        console.log(`Deleted ${deleteResults.deletedCount} results for quiz ID: ${req.params.id}`);
+        // --- END NEW LOGIC ---
+
+        // Now, delete the quiz itself
+        await quiz.deleteOne(); // Use deleteOne() for Mongoose 5.x/6.x.
+
+        res.status(200).json({ message: 'Quiz and associated results removed successfully' });
     } catch (error) {
-        next(error);
+        console.error("Error deleting quiz or results:", error);
+        next(error); // Pass the error to the error handling middleware
     }
 };
 
