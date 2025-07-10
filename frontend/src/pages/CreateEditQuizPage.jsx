@@ -1,119 +1,102 @@
-// frontend/src/pages/CreateEditQuizPage.jsx// Form for creating or editing quizzes (Admin only)
-
 import React, { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form'; // Keep react-hook-form
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { quizSchema } from '../utils/validationSchemas'; // Import quiz schema
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
-import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
-import api from '../api/axiosInstance'; // Import configured axios instance
-import { useNavigate, useParams } from 'react-router-dom'; // Import useNavigate and useParams
+import { quizSchema } from '../utils/validationSchemas';
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../api/axiosInstance';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const CreateEditQuizPage = () => { // Removed navigate, quizIdToEdit from props
+const CreateEditQuizPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
-    const navigate = useNavigate(); // Initialize useNavigate hook
-    const { quizId: quizIdToEdit } = useParams(); // Get quizId from URL parameters
+    const navigate = useNavigate();
+    const { quizId: quizIdToEdit } = useParams();
     const [loading, setLoading] = useState(true);
-    const [generatingQuestions, setGeneratingQuestions] = useState(false); // New state for LLM loading
-    const [questionsGeneratedSuccessfully, setQuestionsGeneratedSuccessfully] = useState(false); // New state for UI feedback
+    const [generatingQuestions, setGeneratingQuestions] = useState(false);
+    const [questionsGeneratedSuccessfully, setQuestionsGeneratedSuccessfully] = useState(false);
 
-    // Default values for the form, used when creating a new quiz
     const defaultQuizData = {
         title: '',
         description: '',
         category: '',
-        duration: 30, // Default duration in minutes
-        questions: [{ questionText: '', options: ['', '', '', ''], correctAnswer: '' }] // Initial empty question
+        duration: 30,
+        questions: [{ questionText: '', options: ['', '', '', ''], correctAnswer: '' }]
     };
 
-    // Initialize react-hook-form with yup resolver and default values
     const { register, handleSubmit, control, formState: { errors }, reset, watch, setValue } = useForm({
         resolver: yupResolver(quizSchema),
-        defaultValues: defaultQuizData // Start with default structure
+        defaultValues: defaultQuizData
     });
 
-    const questions = watch('questions'); // Watch the questions array for dynamic updates in the UI
-    const quizTitle = watch('title'); // Watch quiz title for question generation
-    const quizCategory = watch('category'); // Watch quiz category for question generation
+    const questions = watch('questions');
+    const quizTitle = watch('title');
+    const quizCategory = watch('category');
 
-    // Effect to fetch quiz data when editing an existing quiz
     useEffect(() => {
         if (quizIdToEdit) {
             const fetchQuiz = async () => {
                 try {
-                    const res = await api.get(`/quizzes/${quizIdToEdit}`); // Fetch quiz by ID
+                    const res = await api.get(`/quizzes/${quizIdToEdit}`);
                     const fetchedQuiz = res.data;
-                    reset(fetchedQuiz); // Reset form with fetched data
+                    reset(fetchedQuiz);
                 } catch (error) {
-                    console.error("Error fetching quiz for edit:", error.response?.data || error.message);
+                    console.error("Error fetching quiz for edit:", error);
                     showMessage("Failed to load quiz for editing.", 'error');
-                    navigate('/dashboard'); // Redirect if quiz not found or error
+                    navigate('/dashboard');
                 } finally {
-                    setLoading(false); // Stop loading regardless of success/failure
+                    setLoading(false);
                 }
             };
             fetchQuiz();
         } else {
-            // For new quizzes, defaultValues in useForm already handle initial state.
             setLoading(false);
         }
-    }, [quizIdToEdit, navigate, showMessage, reset]); // Dependencies for useEffect
+    }, [quizIdToEdit, navigate, showMessage, reset]);
 
-
-    // Function to add a new empty question to the form
     const addQuestion = () => {
         const newQuestions = [...questions, { questionText: '', options: ['', '', '', ''], correctAnswer: '' }];
-        setValue('questions', newQuestions); // Use setValue to update array directly
-        setQuestionsGeneratedSuccessfully(false); // Reset feedback on manual add
+        setValue('questions', newQuestions);
+        setQuestionsGeneratedSuccessfully(false);
     };
 
-    // Function to remove a question from the form by index
     const removeQuestion = (index) => {
         const newQuestions = questions.filter((_, i) => i !== index);
-        setValue('questions', newQuestions); // Use setValue to update array directly
-        setQuestionsGeneratedSuccessfully(false); // Reset feedback on manual remove
+        setValue('questions', newQuestions);
+        setQuestionsGeneratedSuccessfully(false);
     };
 
-    // Handle form submission (create or update quiz)
     const onSubmit = async (data) => {
         try {
             if (quizIdToEdit) {
-                // If quizIdToEdit exists, it's an update operation
                 await api.put(`/quizzes/${quizIdToEdit}`, data);
                 showMessage('Quiz updated successfully!', 'success');
             } else {
-                // Otherwise, it's a creation operation
                 await api.post('/quizzes', data);
                 showMessage('Quiz created successfully!', 'success');
             }
-            navigate('/dashboard'); // Redirect to dashboard after successful operation
+            navigate('/dashboard');
         } catch (error) {
-            console.error("Error saving quiz:", error.response?.data || error.message);
+            console.error("Error saving quiz:", error);
             showMessage(`Failed to save quiz: ${error.response?.data?.message || error.message}`, 'error');
         }
     };
 
-    // --- Gemini API Integration: Generate Questions ---
     const generateQuestionsWithLLM = async () => {
-        // First, validate the basic quiz details (title, category) before calling LLM
-        // This prevents unnecessary API calls if essential info is missing.
         if (!quizTitle || !quizCategory) {
             showMessage('Please enter a Quiz Title and Category to generate questions.', 'info');
             return;
         }
 
-        const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // Access API key from environment variable
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
         if (!apiKey) {
-            showMessage('Gemini API Key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.', 'error');
+            showMessage('Gemini API Key is not configured.', 'error');
             return;
         }
 
         setGeneratingQuestions(true);
-        setQuestionsGeneratedSuccessfully(false); // Reset success feedback
-        showMessage('Generating questions with AI...', 'info');
+        setQuestionsGeneratedSuccessfully(false);
 
         try {
-            // Modified prompt to generate 10 questions
             const prompt = `Generate 10 multiple-choice quiz questions about "${quizTitle}" in the category of "${quizCategory}".
             Each question should have 4 options, and one correct answer.
             Provide the output as a JSON array of objects, where each object has:
@@ -122,12 +105,8 @@ const CreateEditQuizPage = () => { // Removed navigate, quizIdToEdit from props
             - "correctAnswer": string (must exactly match one of the options)
             Ensure the JSON is valid and only contains the array of questions.`;
 
-            console.log("Gemini API Request Prompt:", prompt); // Log the prompt
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
             const payload = {
-                contents: chatHistory,
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
                 generationConfig: {
                     responseMimeType: "application/json",
                     responseSchema: {
@@ -144,48 +123,29 @@ const CreateEditQuizPage = () => { // Removed navigate, quizIdToEdit from props
                     }
                 }
             };
-            console.log("Gemini API Request Payload:", JSON.stringify(payload, null, 2)); // Log the payload
 
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
 
-            console.log("Gemini API Raw Response:", response); // Log raw response object
             const result = await response.json();
-            console.log("Gemini API Parsed Result:", result); // Log parsed JSON result
-
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                const jsonString = result.candidates[0].content.parts[0].text;
-                console.log("Gemini API Generated JSON String:", jsonString);
-                const generatedQuestions = JSON.parse(jsonString);
-
-                // Update the form's questions array with the generated questions
+            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                const generatedQuestions = JSON.parse(result.candidates[0].content.parts[0].text);
                 setValue('questions', generatedQuestions);
-                setQuestionsGeneratedSuccessfully(true); // Set success feedback
-
-                // Programmatically submit the form after questions are generated
-                // This will trigger validation and then call onSubmit if valid.
+                setQuestionsGeneratedSuccessfully(true);
                 handleSubmit(onSubmit)();
-
             } else {
-                showMessage('Failed to generate questions. Please try again. Check console for details.', 'error');
-                console.error("Gemini API response structure unexpected:", result);
+                showMessage('Failed to generate questions. Please try again.', 'error');
             }
         } catch (error) {
             showMessage(`Error generating questions: ${error.message}`, 'error');
-            console.error("Error calling Gemini API:", error);
         } finally {
             setGeneratingQuestions(false);
         }
     };
-    // --- End Gemini API Integration ---
-
 
     if (loadingAuth || loading) {
         return <LoadingSpinner />;
@@ -193,172 +153,186 @@ const CreateEditQuizPage = () => { // Removed navigate, quizIdToEdit from props
 
     if (!currentUser || currentUser.role !== 'admin') {
         return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-danger text-xl">Access Denied: Admins only.</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+                <div className="text-center text-2xl text-red-400">Access Denied: Admins only.</div>
             </div>
         );
     }
 
     return (
-        <div className="container py-8 bg-light min-h-[calc(100vh-80px)]">
-            <h1 className="text-4xl font-bold text-primary-700 mb-8 text-center">
-                {quizIdToEdit ? 'Edit Quiz' : 'Create New Quiz'}
-            </h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="bg-white p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-primary-200 space-y-6">
-                {/* Quiz Details Section */}
-                <div>
-                    <label className="block text-dark text-sm font-semibold mb-2" htmlFor="title">Quiz Title</label>
-                    <input
-                        type="text"
-                        id="title"
-                        {...register('title')} // Register input with react-hook-form
-                        placeholder="e.g., General Knowledge Quiz"
-                    />
-                    {errors.title && <p className="text-danger text-xs mt-1">{errors.title.message}</p>}
-                </div>
-                <div>
-                    <label className="block text-dark text-sm font-semibold mb-2" htmlFor="description">Description</label>
-                    <textarea
-                        id="description"
-                        {...register('description')} // Register textarea
-                        rows="3"
-                        placeholder="A brief description of the quiz..."
-                    ></textarea>
-                    {errors.description && <p className="text-danger text-xs mt-1">{errors.description.message}</p>}
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    {quizIdToEdit ? 'Edit Quiz' : 'Create New Quiz'}
+                </h1>
+                
+                <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-gray-700 space-y-6">
+                    {/* Quiz Details Section */}
                     <div>
-                        <label className="block text-dark text-sm font-semibold mb-2" htmlFor="category">Category</label>
+                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="title">Quiz Title</label>
                         <input
                             type="text"
-                            id="category"
-                            {...register('category')} // Register input
-                            placeholder="e.g., Science, History"
+                            id="title"
+                            {...register('title')}
+                            placeholder="e.g., General Knowledge Quiz"
+                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                         />
-                        {errors.category && <p className="text-danger text-xs mt-1">{errors.category.message}</p>}
+                        {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
                     </div>
+                    
                     <div>
-                        <label className="block text-dark text-sm font-semibold mb-2" htmlFor="duration">Duration (minutes)</label>
-                        <input
-                            type="number"
-                            id="duration"
-                            {...register('duration', { valueAsNumber: true })} // Register number input, convert to number
-                            min="1"
-                        />
-                        {errors.duration && <p className="text-danger text-xs mt-1">{errors.duration.message}</p>}
+                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="description">Description</label>
+                        <textarea
+                            id="description"
+                            {...register('description')}
+                            rows="3"
+                            placeholder="A brief description of the quiz..."
+                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                        ></textarea>
+                        {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>}
                     </div>
-                </div>
-
-                {/* Gemini API button for question generation */}
-                <div className="text-center">
-                    <button
-                        type="button"
-                        onClick={generateQuestionsWithLLM}
-                        disabled={generatingQuestions}
-                        className="bg-primary-500 text-white px-6 py-3 rounded-md hover:bg-primary-600 font-bold shadow-md flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {generatingQuestions ? (
-                            <>
-                                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Generating...
-                            </>
-                        ) : (
-                            <>
-                                ✨ Generate up to 10 Questions with AI
-                            </>
-                        )}
-                    </button>
-                </div>
-
-
-                {/* Questions Section */}
-                <h2 className="text-2xl font-bold text-primary-700 mb-4 pt-4 border-t border-primary-200">Questions</h2>
-                {/* Visual feedback for generated questions */}
-                {questionsGeneratedSuccessfully && (
-                    <div className="bg-secondary-100 border border-secondary-400 text-secondary-700 px-4 py-3 rounded relative mb-4" role="alert">
-                        <strong className="font-bold">Success!</strong>
-                        <span className="block sm:inline ml-2">Questions have been generated and populated. If all other quiz details are filled, the quiz has been automatically saved. Otherwise, please fill missing details and click "Create Quiz" or "Update Quiz" to save.</span>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="category">Category</label>
+                            <input
+                                type="text"
+                                id="category"
+                                {...register('category')}
+                                placeholder="e.g., Science, History"
+                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                            />
+                            {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category.message}</p>}
+                        </div>
+                        <div>
+                            <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="duration">Duration (minutes)</label>
+                            <input
+                                type="number"
+                                id="duration"
+                                {...register('duration', { valueAsNumber: true })}
+                                min="1"
+                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                            />
+                            {errors.duration && <p className="text-red-400 text-xs mt-1">{errors.duration.message}</p>}
+                        </div>
                     </div>
-                )}
-                {errors.questions && <p className="text-danger text-sm mb-4">{errors.questions.message}</p>}
 
-                {questions && questions.map((question, qIndex) => (
-                    <div key={qIndex} className="border border-primary-200 p-5 rounded-xl bg-primary-50 space-y-4 shadow-sm relative">
+                    {/* AI Question Generation */}
+                    <div className="text-center">
                         <button
                             type="button"
-                            onClick={() => removeQuestion(qIndex)}
-                            className="absolute top-3 right-3 bg-danger text-white rounded-full p-1 w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600"
-                            aria-label="Remove question"
+                            onClick={generateQuestionsWithLLM}
+                            disabled={generatingQuestions}
+                            className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-md hover:from-purple-600 hover:to-blue-600 font-bold shadow-md flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:-translate-y-1"
                         >
-                            X
+                            {generatingQuestions ? (
+                                <>
+                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                    </svg>
+                                    Generating...
+                                </>
+                            ) : (
+                                '✨ Generate up to 10 Questions with AI'
+                            )}
                         </button>
-                        <div>
-                            <label className="block text-dark text-sm font-semibold mb-2" htmlFor={`question-${qIndex}`}>Question {qIndex + 1} Text</label>
-                            <input
-                                type="text"
-                                id={`question-${qIndex}`}
-                                {...register(`questions.${qIndex}.questionText`)} // Register nested input
-                                placeholder="Enter question text"
-                            />
-                            {/* Display nested errors */}
-                            {errors.questions?.[qIndex]?.questionText && <p className="text-danger text-xs mt-1">{errors.questions[qIndex].questionText.message}</p>}
-                        </div>
-                        <div className="space-y-2">
-                            <label className="block text-dark text-sm font-semibold">Options</label>
-                            {question.options.map((option, oIndex) => (
-                                <div key={oIndex}>
-                                    <input
-                                        type="text"
-                                        {...register(`questions.${qIndex}.options.${oIndex}`)} // Register nested option input
-                                        placeholder={`Option ${oIndex + 1}`}
-                                    />
-                                    {errors.questions?.[qIndex]?.options?.[oIndex] && <p className="text-danger text-xs mt-1">{errors.questions[qIndex].options[oIndex].message}</p>}
-                                </div>
-                            ))}
-                        </div>
-                        <div>
-                            <label className="block text-dark text-sm font-semibold mb-2" htmlFor={`correct-answer-${qIndex}`}>Correct Answer (must match one of the options exactly)</label>
-                            <input
-                                type="text"
-                                id={`correct-answer-${qIndex}`}
-                                {...register(`questions.${qIndex}.correctAnswer`)} // Register nested input
-                                placeholder="Enter the correct option text"
-                            />
-                            {errors.questions?.[qIndex]?.correctAnswer && <p className="text-danger text-xs mt-1">{errors.questions[qIndex].correctAnswer.message}</p>}
-                        </div>
                     </div>
-                ))}
 
-                {/* Button to add a new question */}
-                <button
-                    type="button"
-                    onClick={addQuestion}
-                    className="w-full bg-info text-white py-3 rounded-md hover:bg-blue-600 font-bold shadow-md flex items-center justify-center"
-                >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                    Add Question
-                </button>
+                    {/* Questions Section */}
+                    <h2 className="text-2xl font-bold text-white mb-4 pt-4 border-t border-gray-700">Questions</h2>
+                    
+                    {questionsGeneratedSuccessfully && (
+                        <div className="bg-green-900/50 border border-green-600 text-green-400 px-4 py-3 rounded relative mb-4">
+                            <strong className="font-bold">Success!</strong>
+                            <span className="block sm:inline ml-2">Questions generated. Fill any missing details and save.</span>
+                        </div>
+                    )}
+                    
+                    {errors.questions && <p className="text-red-400 text-sm mb-4">{errors.questions.message}</p>}
 
-                {/* Action buttons (Submit/Update and Cancel) */}
-                <div className="flex space-x-4 mt-6">
-                    <button
-                        type="submit"
-                        className="flex-1 bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 font-bold text-lg"
-                    >
-                        {quizIdToEdit ? 'Update Quiz' : 'Create Quiz'}
-                    </button>
+                    {questions.map((question, qIndex) => (
+                        <div key={qIndex} className="border border-gray-700 p-5 rounded-xl bg-gray-800/50 space-y-4 shadow-sm relative">
+                            <button
+                                type="button"
+                                onClick={() => removeQuestion(qIndex)}
+                                className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-1 w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                                aria-label="Remove question"
+                            >
+                                X
+                            </button>
+                            
+                            <div>
+                                <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor={`question-${qIndex}`}>Question {qIndex + 1} Text</label>
+                                <input
+                                    type="text"
+                                    id={`question-${qIndex}`}
+                                    {...register(`questions.${qIndex}.questionText`)}
+                                    placeholder="Enter question text"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                />
+                                {errors.questions?.[qIndex]?.questionText && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].questionText.message}</p>}
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="block text-gray-300 text-sm font-semibold">Options</label>
+                                {question.options.map((option, oIndex) => (
+                                    <div key={oIndex}>
+                                        <input
+                                            type="text"
+                                            {...register(`questions.${qIndex}.options.${oIndex}`)}
+                                            placeholder={`Option ${oIndex + 1}`}
+                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                        />
+                                        {errors.questions?.[qIndex]?.options?.[oIndex] && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].options[oIndex].message}</p>}
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div>
+                                <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor={`correct-answer-${qIndex}`}>Correct Answer</label>
+                                <input
+                                    type="text"
+                                    id={`correct-answer-${qIndex}`}
+                                    {...register(`questions.${qIndex}.correctAnswer`)}
+                                    placeholder="Enter the correct option text"
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                />
+                                {errors.questions?.[qIndex]?.correctAnswer && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].correctAnswer.message}</p>}
+                            </div>
+                        </div>
+                    ))}
+
+                    {/* Add Question Button */}
                     <button
                         type="button"
-                        onClick={() => navigate('/dashboard')}
-                        className="flex-1 bg-gray-300 text-dark py-3 rounded-md hover:bg-gray-400 font-bold text-lg"
+                        onClick={addQuestion}
+                        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-md hover:from-blue-600 hover:to-cyan-600 font-bold shadow-md flex items-center justify-center transition-all duration-300 hover:-translate-y-1"
                     >
-                        Cancel
+                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Add Question
                     </button>
-                </div>
-            </form>
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-4 mt-6">
+                        <button
+                            type="submit"
+                            className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-md hover:from-blue-600 hover:to-cyan-600 font-bold text-lg transition-all duration-300 hover:-translate-y-1"
+                        >
+                            {quizIdToEdit ? 'Update Quiz' : 'Create Quiz'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => navigate('/dashboard')}
+                            className="flex-1 bg-gray-600 text-white py-3 rounded-md hover:bg-gray-500 font-bold text-lg transition-colors duration-300"
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
     );
 };

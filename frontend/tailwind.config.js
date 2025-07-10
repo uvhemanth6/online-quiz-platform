@@ -3,12 +3,11 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}", // Crucial for Tailwind to scan your React files
+    "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
       colors: {
-        // Define a custom color palette for the quiz platform
         primary: {
           50: '#eef2ff',
           100: '#e0e7ff',
@@ -35,16 +34,28 @@ export default {
           900: '#14532d',
           950: '#0c3d22',
         },
-        accent: '#f97316', // A vibrant accent color (orange-500)
-        info: '#3b82f6',   // Blue for informational messages
-        warning: '#f59e0b', // Yellow for warnings
-        danger: '#ef4444',  // Red for errors/danger
-        dark: '#1f2937',    // Dark gray for text/backgrounds
-        light: '#f9fafb',   // Light gray for backgrounds
+        accent: '#f97316',
+        info: '#3b82f6',
+        warning: '#f59e0b',
+        danger: '#ef4444',
+        dark: '#1f2937',    // Now properly defined as direct color value
+        light: '#f9fafb',
+        // Add the full dark palette while keeping direct 'dark' reference
+        darkPalette: {
+          50: '#f9fafb',
+          100: '#f3f4f6',
+          200: '#e5e7eb',
+          300: '#d1d5db',
+          400: '#9ca3af',
+          500: '#6b7280',
+          600: '#4b5563',
+          700: '#374151',
+          800: '#1f2937', // Matches your 'dark' value
+          900: '#111827',
+          950: '#030712'
+        }
       },
     },
   },
-  plugins: [
-    // require('@tailwindcss/forms'), // If you installed this plugin, keep it here.
-  ],
+  plugins: [],
 }

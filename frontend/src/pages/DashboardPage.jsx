@@ -1,190 +1,173 @@
-// frontend/src/pages/DashboardPage.jsx // User/Admin dashboard displaying quizzes
-
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
-import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
-import UserResultsComponent from './UserResultsComponent'; // Component for user results
-import AdminQuizStatisticsComponent from './AdminQuizStatisticsComponent'; // Component for admin stats
-import api from '../api/axiosInstance'; // Import configured axios instance
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import UserResultsComponent from './UserResultsComponent';
+import AdminQuizStatisticsComponent from './AdminQuizStatisticsComponent';
+import api from '../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const DashboardPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
     const navigate = useNavigate();
     const [quizzes, setQuizzes] = useState([]);
-    const [allResults, setAllResults] = useState([]); // State to hold all quiz results for admin stats
+    const [allResults, setAllResults] = useState([]);
     const [loadingQuizzes, setLoadingQuizzes] = useState(true);
     const [loadingAllResults, setLoadingAllResults] = useState(true);
 
     useEffect(() => {
         const fetchData = async () => {
-            console.log("Dashboard fetchData: loadingAuth =", loadingAuth, "currentUser =", currentUser);
+            if (loadingAuth) return;
 
-            // Wait until authentication state is no longer loading
-            if (loadingAuth) {
-                console.log("Dashboard: Auth still loading, returning.");
-                return;
-            }
-
-            // If no user is logged in after auth loads, set loading states to false and return.
-            // This ensures the "Please log in" message appears quickly.
             if (!currentUser) {
-                console.log("Dashboard: No current user, setting loading to false.");
                 setLoadingQuizzes(false);
                 setLoadingAllResults(false);
                 return;
             }
 
-            // Set loading states to true before fetching data
             setLoadingQuizzes(true);
             setLoadingAllResults(true);
-            console.log("Dashboard: Fetching data for user:", currentUser._id); // Use currentUser._id for Node.js backend
 
             try {
-                // Fetch quizzes
                 const quizzesRes = await api.get('/quizzes');
                 setQuizzes(quizzesRes.data);
                 setLoadingQuizzes(false);
-                console.log("Dashboard: Quizzes fetched successfully.");
 
-                // Fetch all results if the current user is an admin
                 if (currentUser.role === 'admin') {
                     const resultsRes = await api.get('/results/all');
                     setAllResults(resultsRes.data);
-                    console.log("Dashboard: All results fetched successfully (Admin).");
                 }
                 setLoadingAllResults(false);
 
             } catch (error) {
-                console.error("Error fetching dashboard data: ", error.response?.data || error.message);
+                console.error("Error fetching dashboard data: ", error);
                 showMessage("Failed to load dashboard data.", 'error');
                 setLoadingQuizzes(false);
                 setLoadingAllResults(false);
             }
         };
 
-        fetchData(); // Call fetchData on component mount and when dependencies change
-    }, [currentUser, loadingAuth, showMessage]); // Re-fetch when currentUser or auth loading changes
+        fetchData();
+    }, [currentUser, loadingAuth, showMessage]);
 
-    // Show loading spinner while authenticating or fetching dashboard data
     if (loadingAuth || loadingQuizzes || loadingAllResults) {
-        console.log("Dashboard: Displaying LoadingSpinner.");
         return <LoadingSpinner />;
     }
 
-    // Redirect to login if not authenticated (after loadingAuth is false)
     if (!currentUser) {
-        console.log("Dashboard: No current user, displaying login prompt.");
         return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-danger text-xl">Please log in to view the dashboard.</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+                <div className="text-center text-2xl text-red-400">Please log in to view the dashboard.</div>
             </div>
         );
     }
 
-    const isAdmin = currentUser.role === 'admin'; // Check if current user is admin
+    const isAdmin = currentUser.role === 'admin';
 
-    // Handle quiz deletion (Admin only)
     const handleDeleteQuiz = async (quizId, quizTitle) => {
-        // IMPORTANT: Replace window.confirm with a custom modal for better UI/UX
         if (window.confirm(`Are you sure you want to delete "${quizTitle}"?`)) {
             try {
-                await api.delete(`/quizzes/${quizId}`); // Delete quiz via API
-                setQuizzes(prevQuizzes => prevQuizzes.filter(q => q._id !== quizId)); // Optimistically update UI
-                // Also re-fetch all results to update statistics if admin
+                await api.delete(`/quizzes/${quizId}`);
+                setQuizzes(prevQuizzes => prevQuizzes.filter(q => q._id !== quizId));
                 if (isAdmin) {
                     const resultsRes = await api.get('/results/all');
                     setAllResults(resultsRes.data);
                 }
                 showMessage('Quiz deleted successfully!', 'success');
             } catch (error) {
-                console.error("Error deleting quiz:", error.response?.data || error.message);
+                console.error("Error deleting quiz:", error);
                 showMessage(`Failed to delete quiz: ${error.response?.data?.message || error.message}`, 'error');
             }
         }
     };
 
     return (
-        <div className="container py-8 bg-light min-h-[calc(100vh-80px)]">
-            <h1 className="text-4xl font-bold text-primary-700 mb-8 text-center">
-                {isAdmin ? 'Admin Dashboard' : 'User Dashboard'}
-            </h1>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    {isAdmin ? 'Admin Dashboard' : 'Your Dashboard'}
+                </h1>
 
-            {/* Button to create new quiz (Admin only) */}
-            {isAdmin && (
-                <div className="mb-8 text-center">
-                    <button
-                        onClick={() => navigate('/create-quiz')}
-                        className="bg-secondary-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-secondary-700 font-semibold text-lg flex items-center justify-center mx-auto"
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        Create New Quiz
-                    </button>
-                </div>
-            )}
+                {isAdmin && (
+                    <div className="mb-12 text-center">
+                        <button
+                            onClick={() => navigate('/create-quiz')}
+                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                        >
+                            <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            Create New Quiz
+                        </button>
+                    </div>
+                )}
 
-            {/* Display list of quizzes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {quizzes.length === 0 ? (
-                    <div className="col-span-full text-center text-dark text-lg py-10">No quizzes available. {isAdmin && "Start by creating one!"}</div>
-                ) : (
-                    quizzes.map(quiz => (
-                        <div key={quiz._id} className="bg-white p-6 rounded-xl shadow-lg border border-primary-100 flex flex-col justify-between transform transition duration-300 hover:scale-105 hover:shadow-2xl">
-                            <div>
-                                <h3 className="text-2xl font-bold text-primary-800 mb-2">{quiz.title}</h3>
-                                <p className="text-dark text-sm mb-4">{quiz.description}</p>
-                                <p className="text-gray-500 text-xs mb-2">Category: <span className="font-medium text-primary-600">{quiz.category}</span></p>
-                                <p className="text-gray-500 text-xs mb-4">Duration: <span className="font-medium text-primary-600">{quiz.duration} minutes</span></p>
-                                <p className="text-gray-500 text-xs">Questions: <span className="font-medium text-primary-600">{quiz.questions.length}</span></p>
-                            </div>
-                            <div className="mt-6 flex space-x-3">
-                                {!isAdmin ? (
-                                    // Button for users to take the quiz
-                                    <button
-                                        onClick={() => navigate(`/take-quiz/${quiz._id}`)}
-                                        className="flex-1 bg-info text-white px-5 py-2 rounded-lg shadow-md hover:bg-blue-700 font-semibold text-base"
-                                    >
-                                        Take Quiz
-                                    </button>
-                                ) : (
-                                    // Buttons for admins to edit or delete quizzes
-                                    <>
-                                        <button
-                                            onClick={() => navigate(`/edit-quiz/${quiz._id}`)}
-                                            className="flex-1 bg-warning text-white px-5 py-2 rounded-lg shadow-md hover:bg-warning-600 font-semibold text-base"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => handleDeleteQuiz(quiz._id, quiz.title)}
-                                            className="flex-1 bg-danger text-white px-5 py-2 rounded-lg shadow-md hover:bg-danger-700 font-semibold text-base"
-                                        >
-                                            Delete
-                                        </button>
-                                    </>
-                                )}
-                            </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {quizzes.length === 0 ? (
+                        <div className="col-span-full text-center text-gray-400 text-xl py-16">
+                            No quizzes available. {isAdmin && "Start by creating one!"}
                         </div>
-                    ))
+                    ) : (
+                        quizzes.map(quiz => (
+                            <div key={quiz._id} className="bg-gray-800/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700 hover:border-cyan-400/30 transition-all duration-300 hover:-translate-y-2">
+                                <div className="mb-6">
+                                    <h3 className="text-2xl font-bold text-white mb-3">{quiz.title}</h3>
+                                    <p className="text-gray-300 text-sm mb-4">{quiz.description}</p>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="bg-gray-700/50 px-3 py-1 rounded-full text-cyan-400">Category: {quiz.category}</span>
+                                        <span className="bg-gray-700/50 px-3 py-1 rounded-full text-blue-400">{quiz.duration} mins</span>
+                                        <span className="bg-gray-700/50 px-3 py-1 rounded-full text-purple-400">{quiz.questions.length} Qs</span>
+                                    </div>
+                                </div>
+                                <div className="mt-auto flex space-x-3">
+                                    {!isAdmin ? (
+                                        <button
+                                            onClick={() => navigate(`/take-quiz/${quiz._id}`)}
+                                            className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
+                                        >
+                                            Take Quiz
+                                        </button>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => navigate(`/edit-quiz/${quiz._id}`)}
+                                                className="flex-1 bg-gray-700 text-white py-2 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleDeleteQuiz(quiz._id, quiz.title)}
+                                                className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-300"
+                                            >
+                                                Delete
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                {!isAdmin && (
+                    <div className="mt-16">
+                        <h2 className="text-3xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                            Your Quiz Results
+                        </h2>
+                        <UserResultsComponent userId={currentUser._id} />
+                    </div>
+                )}
+
+                {isAdmin && (
+                    <div className="mt-16 bg-gray-800/50 p-6 rounded-xl border border-gray-700">
+                        <h2 className="text-3xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                            All User Results
+                        </h2>
+                        <div className="bg-gray-700/50 p-6 rounded-lg">
+                            <AdminQuizStatisticsComponent quizzes={quizzes} allResults={allResults} />
+                        </div>
+                    </div>
                 )}
             </div>
-
-            {/* User-specific Results component */}
-            {!isAdmin && (
-                <div className="mt-12">
-                    <h2 className="text-3xl font-bold text-primary-700 mb-6 text-center">Your Quiz Results</h2>
-                    <UserResultsComponent userId={currentUser._id} /> {/* Pass Node.js user ID */}
-                </div>
-            )}
-
-            {/* Admin-specific Quiz Statistics component */}
-            {isAdmin && (
-                <div className="mt-12">
-                    <h2 className="text-3xl font-bold text-primary-700 mb-6 text-center">All User Results</h2>
-                    {/* Pass both quizzes and allResults to the AdminQuizStatisticsComponent */}
-                    <AdminQuizStatisticsComponent quizzes={quizzes} allResults={allResults} />
-                </div>
-            )}
         </div>
     );
 };

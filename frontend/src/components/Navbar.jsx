@@ -1,131 +1,168 @@
-// frontend/src/components/NavBar.jsx // Main navigation bar
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom'; // Import Link and useNavigate
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const NavBar = () => {
     const { isAuthenticated, logout, user } = useAuth();
-    const navigate = useNavigate(); // Initialize useNavigate hook
+    const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // This function is for programmatic navigation, e.g., after logout
     const handleNavigation = (path) => {
         navigate(path);
-        setIsMobileMenuOpen(false); // Close mobile menu on navigation
+        setIsMobileMenuOpen(false);
     };
 
     const handleLogout = () => {
-        logout(); // Call the logout function from AuthContext
-        navigate('/login'); // Redirect to login after logout
-        setIsMobileMenuOpen(false); // Close mobile menu on logout
+        logout();
+        navigate('/login');
+        setIsMobileMenuOpen(false);
     };
 
-    return (
-        <nav className="bg-primary-800 text-white p-4 shadow-md sticky top-0 z-40">
-            <div className="container mx-auto flex justify-between items-center flex-wrap">
-                {/* Logo/Brand */}
-                <Link
-                    to="/" // Use Link component for navigation
-                    className="text-2xl font-bold cursor-pointer text-primary-100 hover:text-primary-50 transition-colors duration-200"
-                >
-                    Quizzer
-                </Link>
+    // Close mobile menu when clicking outside
+    const handleClickOutside = (e) => {
+        if (!e.target.closest('.nav-container')) {
+            setIsMobileMenuOpen(false);
+        }
+    };
 
-                {/* Mobile Menu Button (Hamburger) */}
-                <div className="block lg:hidden">
+    // Add event listener for outside clicks
+    React.useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.addEventListener('click', handleClickOutside);
+        }
+        return () => {
+            document.removeEventListener('click', handleClickOutside);
+        };
+    }, [isMobileMenuOpen]);
+
+    return (
+        <nav className="bg-primary-800 text-white sticky top-0 z-40 shadow-lg">
+            <div className="container mx-auto px-4 py-3">
+                <div className="flex justify-between items-center">
+                    {/* Logo/Brand */}
+                    <Link
+                        to="/"
+                        className="text-2xl font-bold text-primary-100 hover:text-white transition-colors duration-200"
+                    >
+                        Quizzer
+                    </Link>
+
+                    {/* Mobile Menu Button */}
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="text-primary-100 hover:text-primary-50 focus:outline-none focus:text-primary-50"
+                        className="lg:hidden text-primary-100 hover:text-white focus:outline-none"
+                        aria-expanded={isMobileMenuOpen}
                         aria-label="Toggle navigation"
                     >
-                        <svg className="h-6 w-6 fill-current" viewBox="0 0 24 24">
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             {isMobileMenuOpen ? (
-                                <path
-                                    fillRule="evenodd"
-                                    clipRule="evenodd"
-                                    d="M18.278 16.864a1 1 0 0 0 0-1.414l-4.243-4.243a1 1 0 1 0-1.414 1.414l4.243 4.243a1 1 0 0 0 1.414 0zM5.722 16.864a1 1 0 0 1 0-1.414l4.243-4.243a1 1 0 1 1 1.414 1.414l-4.243 4.243a1 1 0 0 1 0-1.414zM18.278 7.136a1 1 0 0 0-1.414 0l-4.243 4.243a1 1 0 1 0 1.414 1.414l4.243-4.243a1 1 0 0 0 0-1.414zM5.722 7.136a1 1 0 0 1 1.414 0l4.243 4.243a1 1 0 1 1-1.414 1.414l-4.243-4.243a1 1 0 0 1 0-1.414z"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                             ) : (
-                                <path
-                                    fillRule="evenodd"
-                                    d="M4 5h16a1 1 0 0 1 0 2H4a1 1 0 1 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2zm0 6h16a1 1 0 0 1 0 2H4a1 1 0 0 1 0-2z"
-                                />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                             )}
                         </svg>
                     </button>
-                </div>
 
-                {/* Desktop Menu & Mobile Menu Content */}
-                <div
-                    className={`${
-                        isMobileMenuOpen ? 'block' : 'hidden'
-                    } w-full lg:flex lg:items-center lg:w-auto`}
-                >
-                    <ul className="text-xl lg:flex items-center space-y-4 lg:space-y-0 lg:space-x-8 mt-4 lg:mt-0">
-                        <li>
-                            <Link
-                                to="/"
-                                className="block w-full text-left lg:inline-block hover:text-primary-300 transition-colors duration-200"
-                                onClick={() => setIsMobileMenuOpen(false)} // Close mobile menu on click
-                            >
-                                Home
-                            </Link>
-                        </li>
+                    {/* Desktop Menu */}
+                    <div className="hidden lg:flex items-center space-x-6">
+                        <Link to="/" className="hover:text-primary-200 transition-colors duration-200">
+                            Home
+                        </Link>
+                        
                         {isAuthenticated ? (
                             <>
-                                <li>
-                                    <Link
-                                        to="/dashboard"
-                                        className="block w-full text-left lg:inline-block hover:text-primary-300 transition-colors duration-200"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Dashboard
-                                    </Link>
-                                </li>
+                                <Link to="/dashboard" className="hover:text-primary-200 transition-colors duration-200">
+                                    Dashboard
+                                </Link>
                                 {user?.role === 'admin' && (
-                                    <li>
-                                        <Link
-                                            to="/create-quiz"
-                                            className="block w-full text-left lg:inline-block hover:text-primary-300 transition-colors duration-200"
-                                            onClick={() => setIsMobileMenuOpen(false)}
-                                        >
-                                            Create Quiz
-                                        </Link>
-                                    </li>
+                                    <Link to="/create-quiz" className="hover:text-primary-200 transition-colors duration-200">
+                                        Create Quiz
+                                    </Link>
                                 )}
-                                <li>
+                                <div className="flex items-center space-x-4">
+                                    <span className="text-primary-100">Hi, {user?.name || 'User'}</span>
                                     <button
-                                        onClick={handleLogout} // This is the logout button
-                                        className="block w-full text-left lg:inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
+                                        onClick={handleLogout}
+                                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
                                     >
-                                        Logout ({user?.name || 'User'})
+                                        Logout
                                     </button>
-                                </li>
+                                </div>
                             </>
                         ) : (
                             <>
-                                <li>
-                                    <Link
-                                        to="/login"
-                                        className="block w-full text-left lg:inline-block hover:text-primary-300 transition-colors duration-200"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Login
-                                    </Link>
-                                </li>
-                                <li>
-                                    <Link
-                                        to="/register"
-                                        className="block w-full text-left lg:inline-block bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200"
-                                        onClick={() => setIsMobileMenuOpen(false)}
-                                    >
-                                        Register
-                                    </Link>
-                                </li>
+                                <Link to="/login" className="hover:text-primary-200 transition-colors duration-200">
+                                    Login
+                                </Link>
+                                <Link 
+                                    to="/register" 
+                                    className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                >
+                                    Register
+                                </Link>
                             </>
                         )}
-                    </ul>
+                    </div>
+                </div>
+
+                {/* Mobile Menu Dropdown */}
+                <div className={`nav-container lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} mt-4 pb-4`}>
+                    <div className="flex flex-col space-y-4">
+                        <Link 
+                            to="/" 
+                            className="py-2 hover:text-primary-200 transition-colors duration-200"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                            Home
+                        </Link>
+                        
+                        {isAuthenticated ? (
+                            <>
+                                <Link 
+                                    to="/dashboard" 
+                                    className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Dashboard
+                                </Link>
+                                {user?.role === 'admin' && (
+                                    <Link 
+                                        to="/create-quiz" 
+                                        className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    >
+                                        Create Quiz
+                                    </Link>
+                                )}
+                                <div className="pt-2 border-t border-primary-700">
+                                    <span className="block py-2 text-primary-100">Logged in as {user?.name || 'User'}</span>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 rounded-lg transition-colors duration-200"
+                                    >
+                                        Logout
+                                    </button>
+                                </div>
+                            </>
+                        ) : (
+                            <>
+                                <Link 
+                                    to="/login" 
+                                    className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Login
+                                </Link>
+                                <Link 
+                                    to="/register" 
+                                    className="bg-primary-600 hover:bg-primary-700 text-white py-2 text-center rounded-lg transition-colors duration-200"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Register
+                                </Link>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
         </nav>

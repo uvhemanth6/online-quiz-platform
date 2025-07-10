@@ -1,59 +1,52 @@
-// frontend/src/pages/QuizResultsPage.jsx // Displays results for a specific quiz submission
-
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
-import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
-import api from '../api/axiosInstance'; // Import configured axios instance
-import { useNavigate, useParams } from 'react-router-dom'; // Import useNavigate and useParams
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../api/axiosInstance';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const QuizResultsPage = () => { // Removed resultId from props
+const QuizResultsPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
-    const navigate = useNavigate(); // Initialize useNavigate hook
-    const { resultId } = useParams(); // Get resultId from URL parameters
+    const navigate = useNavigate();
+    const { resultId } = useParams();
     const [result, setResult] = useState(null);
     const [loadingResult, setLoadingResult] = useState(true);
-    const [quiz, setQuiz] = useState(null); // To store quiz details for answer review
-    // New state to manage explanations for each question
-    const [explanations, setExplanations] = useState({}); // {questionIndex: "explanation text"}
-    const [explainingQuestionIndex, setExplainingQuestionIndex] = useState(null); // Tracks which question is being explained
+    const [quiz, setQuiz] = useState(null);
+    const [explanations, setExplanations] = useState({});
+    const [explainingQuestionIndex, setExplainingQuestionIndex] = useState(null);
 
-    // Effect to fetch quiz result and associated quiz details
     useEffect(() => {
         const fetchResult = async () => {
             if (!resultId) {
                 showMessage('No result ID provided.', 'error');
-                navigate('/dashboard'); // Redirect if no result ID
+                navigate('/dashboard');
                 setLoadingResult(false);
                 return;
             }
             try {
-                // Fetch the specific result from the backend
                 const res = await api.get(`/results/${resultId}`);
                 const fetchedResult = res.data;
                 setResult(fetchedResult);
 
-                // Fetch the original quiz details to display questions and correct answers for review
                 const quizRes = await api.get(`/quizzes/${fetchedResult.quizId}`);
                 setQuiz(quizRes.data);
 
             } catch (error) {
-                console.error("Error fetching result or quiz:", error.response?.data || error.message);
+                console.error("Error fetching result or quiz:", error);
                 showMessage("Failed to load quiz results.", 'error');
-                navigate('/dashboard'); // Redirect on error
+                navigate('/dashboard');
             } finally {
-                setLoadingResult(false); // Stop loading regardless of success/failure
+                setLoadingResult(false);
             }
         };
 
-        if (!loadingAuth && currentUser) { // Fetch only if authenticated
+        if (!loadingAuth && currentUser) {
             fetchResult();
         }
-    }, [resultId, navigate, showMessage, loadingAuth, currentUser]); // Dependencies for useEffect
+    }, [resultId, navigate, showMessage, loadingAuth, currentUser]);
 
-    // --- Gemini API Integration: Explain Answer ---
     const explainAnswerWithLLM = async (questionIndex, questionText, options, correctAnswer) => {
-        setExplainingQuestionIndex(questionIndex); // Set loading for this specific question
-        setExplanations(prev => ({ ...prev, [questionIndex]: 'Generating explanation...' })); // Show loading text
+        setExplainingQuestionIndex(questionIndex);
+        setExplanations(prev => ({ ...prev, [questionIndex]: 'Generating explanation...' }));
 
         try {
             const prompt = `Provide a concise explanation for the following multiple-choice question and its correct answer.
@@ -62,18 +55,9 @@ const QuizResultsPage = () => { // Removed resultId from props
             Correct Answer: "${correctAnswer}"
             Keep the explanation to 3-4 sentences.`;
 
-            console.log("Gemini API Request Prompt:", prompt); // Log the prompt
-            let chatHistory = [];
-            chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-            const payload = { contents: chatHistory };
-            console.log("Gemini API Request Payload:", JSON.stringify(payload, null, 2)); // Log the payload
-
-            // IMPORTANT: Replace "YOUR_GEMINI_API_KEY_HERE" with your actual Gemini API key
-            // You can get one from Google AI Studio: https://aistudio.google.com/app/apikey
-             const apiKey = import.meta.env.VITE_GEMINI_API_KEY; // Access API key from environment variable
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
             if (!apiKey) {
-                showMessage('Gemini API Key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.', 'error');
+                showMessage('Gemini API Key is not configured.', 'error');
                 return;
             }
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
@@ -81,103 +65,88 @@ const QuizResultsPage = () => { // Removed resultId from props
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
             });
 
-            console.log("Gemini API Raw Response:", response); // Log raw response object
             const result = await response.json();
-            console.log("Gemini API Parsed Result:", result); // Log parsed JSON result
-
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                const explanationText = result.candidates[0].content.parts[0].text;
-                console.log("Gemini API Generated Explanation Text:", explanationText);
-                setExplanations(prev => ({ ...prev, [questionIndex]: explanationText }));
+            if (result.candidates?.[0]?.content?.parts?.[0]?.text) {
+                setExplanations(prev => ({ ...prev, [questionIndex]: result.candidates[0].content.parts[0].text }));
             } else {
-                setExplanations(prev => ({ ...prev, [questionIndex]: 'Failed to get explanation. Check console for details.' }));
-                console.error("Gemini API response structure unexpected:", result);
+                setExplanations(prev => ({ ...prev, [questionIndex]: 'Failed to get explanation.' }));
             }
         } catch (error) {
             setExplanations(prev => ({ ...prev, [questionIndex]: `Error: ${error.message}` }));
-            console.error("Error calling Gemini API for explanation:", error);
         } finally {
-            setExplainingQuestionIndex(null); // Clear loading state
+            setExplainingQuestionIndex(null);
         }
     };
-    // --- End Gemini API Integration ---
 
-
-    // Show loading spinner while fetching data
-    if (loadingAuth || loadingResult || !quiz) { // Wait for quiz data too for review
+    if (loadingAuth || loadingResult || !quiz) {
         return <LoadingSpinner />;
     }
 
-    // Redirect to login if not authenticated
     if (!currentUser) {
         return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-danger text-xl">Please log in to view results.</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+                <div className="text-center text-2xl text-red-400">Please log in to view results.</div>
             </div>
         );
     }
 
-    // Display message if result data is missing after loading
     if (!result) {
         return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-danger text-xl">Could not load quiz results.</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+                <div className="text-center text-2xl text-red-400">Could not load quiz results.</div>
             </div>
         );
     }
 
-    // Calculate score percentage
     const percentage = ((result.score / result.totalQuestions) * 100).toFixed(2);
 
     return (
-        <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-light p-4">
-            <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-4xl mx-auto border border-primary-200">
-                <h2 className="text-4xl font-bold text-primary-700 mb-6 text-center">Quiz Results: {result.quizTitle}</h2>
-                <div className="text-center space-y-4 mb-8 pb-4 border-b border-primary-200">
-                    <p className="text-xl text-dark">Quiz: <span className="font-semibold text-primary-600">{result.quizTitle || 'N/A'}</span></p>
-                    <p className="text-2xl font-bold text-secondary-600">Score: {result.score} / {result.totalQuestions}</p>
-                    <p className="text-3xl font-extrabold text-primary-600">Percentage: {percentage}%</p>
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+            <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-4xl mx-auto border border-gray-700">
+                <h2 className="text-4xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    Quiz Results: {result.quizTitle}
+                </h2>
+                
+                <div className="text-center space-y-4 mb-8 pb-4 border-b border-gray-700">
+                    <p className="text-xl text-gray-300">Quiz: <span className="font-semibold text-cyan-400">{result.quizTitle || 'N/A'}</span></p>
+                    <p className="text-2xl font-bold text-green-400">Score: {result.score} / {result.totalQuestions}</p>
+                    <p className="text-3xl font-extrabold text-blue-400">Percentage: {percentage}%</p>
                     {result.submittedAt && (
-                        <p className="text-sm text-gray-500">Submitted On: {new Date(result.submittedAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-400">Submitted On: {new Date(result.submittedAt).toLocaleString()}</p>
                     )}
                 </div>
 
-                <h3 className="text-2xl font-bold text-primary-700 mb-4">Your Answers Review</h3>
+                <h3 className="text-2xl font-bold text-white mb-4">Your Answers Review</h3>
                 <div className="space-y-6">
-                    {/* Map through original quiz questions to display questions and user's answers */}
                     {quiz.questions.map((q, index) => (
-                        <div key={index} className="border border-primary-200 p-4 rounded-xl bg-primary-50">
-                            <p className="text-lg font-semibold text-dark mb-2">Q{index + 1}: {q.questionText}</p>
-                            <ul className="list-disc list-inside space-y-1 text-dark">
+                        <div key={index} className="border border-gray-700 p-4 rounded-xl bg-gray-800/50">
+                            <p className="text-lg font-semibold text-white mb-2">Q{index + 1}: {q.questionText}</p>
+                            <ul className="list-disc list-inside space-y-1 text-gray-300">
                                 {q.options.map((option, optIndex) => (
                                     <li key={optIndex} className={`${
-                                        // Highlight correct answer in secondary (green)
-                                        option === q.correctAnswer ? 'text-secondary-600 font-bold' : ''
+                                        option === q.correctAnswer ? 'text-green-400 font-bold' : ''
                                     } ${
-                                        // If user's answer and it's wrong, highlight in danger (red) and strike-through
-                                        result.userAnswers[index] === option && option !== q.correctAnswer ? 'text-danger line-through' : ''
+                                        result.userAnswers[index] === option && option !== q.correctAnswer ? 'text-red-400 line-through' : ''
                                     }`}>
                                         {option}
                                         {result.userAnswers[index] === option && (
-                                            <span className="ml-2 text-sm italic"> (Your Answer)</span>
+                                            <span className="ml-2 text-sm italic text-gray-400"> (Your Answer)</span>
                                         )}
                                         {option === q.correctAnswer && (
-                                            <span className="ml-2 text-sm italic"> (Correct Answer)</span>
+                                            <span className="ml-2 text-sm italic text-gray-400"> (Correct Answer)</span>
                                         )}
                                     </li>
                                 ))}
                             </ul>
-                            {/* Gemini API button for explanation */}
+                            
                             <div className="mt-4 text-right">
                                 <button
                                     onClick={() => explainAnswerWithLLM(index, q.questionText, q.options, q.correctAnswer)}
                                     disabled={explainingQuestionIndex === index}
-                                    className="bg-info text-white px-4 py-2 rounded-md hover:bg-blue-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-md hover:from-blue-600 hover:to-cyan-600 text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {explainingQuestionIndex === index ? (
                                         <>
@@ -188,16 +157,14 @@ const QuizResultsPage = () => { // Removed resultId from props
                                             Explaining...
                                         </>
                                     ) : (
-                                        <>
-                                            ✨ Explain Answer
-                                        </>
+                                        '✨ Explain Answer'
                                     )}
                                 </button>
                             </div>
-                            {/* Display explanation if available */}
+                            
                             {explanations[index] && (
-                                <div className="mt-4 p-3 bg-info-50 rounded-xl border border-info-200 text-info-800 text-sm">
-                                    <p className="font-semibold mb-1">Explanation:</p>
+                                <div className="mt-4 p-3 bg-gray-700 rounded-xl border border-gray-600 text-gray-200 text-sm">
+                                    <p className="font-semibold mb-1 text-cyan-400">Explanation:</p>
                                     <p>{explanations[index]}</p>
                                 </div>
                             )}
@@ -206,8 +173,8 @@ const QuizResultsPage = () => { // Removed resultId from props
                 </div>
 
                 <button
-                    onClick={() => navigate('/dashboard')} // Use React Router navigate
-                    className="mt-8 bg-primary-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-lg w-full"
+                    onClick={() => navigate('/dashboard')}
+                    className="mt-8 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg w-full transition-all duration-300 hover:-translate-y-1"
                 >
                     Back to Dashboard
                 </button>

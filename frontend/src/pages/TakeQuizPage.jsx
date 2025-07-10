@@ -1,118 +1,99 @@
-// frontend/src/pages/TakeQuizPage.jsx  // Quiz taking interface
-
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth hook
-import LoadingSpinner from '../components/LoadingSpinner'; // Import LoadingSpinner
-import api from '../api/axiosInstance'; // Import configured axios instance
-import { useNavigate, useParams } from 'react-router-dom'; // Import useNavigate and useParams
+import { useAuth } from '../contexts/AuthContext';
+import LoadingSpinner from '../components/LoadingSpinner';
+import api from '../api/axiosInstance';
+import { useNavigate, useParams } from 'react-router-dom';
 
-const TakeQuizPage = () => { // Removed quizId from props
+const TakeQuizPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
-    const navigate = useNavigate(); // Initialize useNavigate hook
-    const { quizId } = useParams(); // Get quizId from URL parameters
+    const navigate = useNavigate();
+    const { quizId } = useParams();
     const [quiz, setQuiz] = useState(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-    const [selectedAnswers, setSelectedAnswers] = useState({}); // Stores { questionIndex: 'selectedOptionText' }
-    const [timeLeft, setTimeLeft] = useState(0); // Time left in seconds
+    const [selectedAnswers, setSelectedAnswers] = useState({});
+    const [timeLeft, setTimeLeft] = useState(0);
     const [quizStarted, setQuizStarted] = useState(false);
     const [quizFinished, setQuizFinished] = useState(false);
-    const timerRef = useRef(null); // Ref to store the interval ID for the timer
+    const timerRef = useRef(null);
 
-    // Effect to fetch quiz data when component mounts or quizId changes
     useEffect(() => {
         const fetchQuiz = async () => {
             if (!quizId) {
                 showMessage('No quiz ID provided.', 'error');
-                navigate('/dashboard'); // Redirect if no quiz ID
+                navigate('/dashboard');
                 return;
             }
             try {
-                const res = await api.get(`/quizzes/${quizId}`); // Fetch quiz by ID from backend
+                const res = await api.get(`/quizzes/${quizId}`);
                 const fetchedQuiz = res.data;
                 setQuiz(fetchedQuiz);
-                setTimeLeft(fetchedQuiz.duration * 60); // Initialize timer with quiz duration in seconds
+                setTimeLeft(fetchedQuiz.duration * 60);
             } catch (error) {
-                console.error("Error fetching quiz:", error.response?.data || error.message);
+                console.error("Error fetching quiz:", error);
                 showMessage("Failed to load quiz.", 'error');
-                navigate('/dashboard'); // Redirect to dashboard if quiz fetch fails
+                navigate('/dashboard');
             }
         };
 
-        if (!loadingAuth && quizId) { // Fetch only if auth is loaded and quizId is provided
+        if (!loadingAuth && quizId) {
             fetchQuiz();
         }
-    }, [quizId, navigate, showMessage, loadingAuth]); // Dependencies for useEffect
+    }, [quizId, navigate, showMessage, loadingAuth]);
 
-    // Effect for the quiz timer logic
     useEffect(() => {
         if (quizStarted && timeLeft > 0 && !quizFinished) {
-            // Start interval timer if quiz started, time left, and not finished
             timerRef.current = setInterval(() => {
-                setTimeLeft(prevTime => prevTime - 1); // Decrement time every second
+                setTimeLeft(prevTime => prevTime - 1);
             }, 1000);
         } else if (timeLeft === 0 && quizStarted && !quizFinished) {
-            // If time runs out, automatically submit the quiz
             handleSubmitQuiz();
         }
 
-        // Cleanup function: clear interval when component unmounts or dependencies change
         return () => clearInterval(timerRef.current);
-    }, [quizStarted, timeLeft, quizFinished]); // eslint-disable-line react-hooks/exhaustive-deps
-    // Added eslint-disable-line because handleSubmitQuiz is not in dependencies, but it's called
-    // If handleSubmitQuiz was added to dependencies, it would cause an infinite loop if not memoized.
-    // In this case, it's acceptable as it triggers a state change (quizFinished) which naturally ends the timer.
+    }, [quizStarted, timeLeft, quizFinished]);
 
-
-    // Show loading spinner while authenticating or fetching quiz data
     if (loadingAuth || !quiz) {
         return <LoadingSpinner />;
     }
 
-    // Redirect to login if not authenticated
     if (!currentUser) {
         return (
-            <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4">
-                <div className="text-center text-danger text-xl">Please log in to take quizzes.</div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+                <div className="text-center text-2xl text-red-400">Please log in to take quizzes.</div>
             </div>
         );
     }
 
-    // Handle selection of an answer option
     const handleOptionSelect = (option) => {
         setSelectedAnswers(prev => ({
             ...prev,
-            [currentQuestionIndex]: option // Store selected option for current question
+            [currentQuestionIndex]: option
         }));
     };
 
-    // Navigate to the next question or submit quiz if it's the last question
     const handleNext = () => {
         if (currentQuestionIndex < quiz.questions.length - 1) {
-            setCurrentQuestionIndex(prev => prev + 1); // Move to next question
+            setCurrentQuestionIndex(prev => prev + 1);
         } else {
             handleSubmitQuiz();
         }
     };
 
-    // Navigate to the previous question
     const handlePrevious = () => {
         if (currentQuestionIndex > 0) {
-            setCurrentQuestionIndex(prev => prev - 1); // Move to previous question
+            setCurrentQuestionIndex(prev => prev - 1);
         }
     };
 
-    // Start the quiz (resets state and starts timer)
     const startQuiz = () => {
         setQuizStarted(true);
     };
 
-    // Calculate score and submit quiz results to the backend
     const handleSubmitQuiz = async () => {
-        setQuizFinished(true); // Mark quiz as finished
-        clearInterval(timerRef.current); // Stop the timer
+        setQuizFinished(true);
+        clearInterval(timerRef.current);
 
         let score = 0;
-        // Calculate score by comparing selected answers with correct answers
         quiz.questions.forEach((q, index) => {
             if (selectedAnswers[index] === q.correctAnswer) {
                 score++;
@@ -126,102 +107,104 @@ const TakeQuizPage = () => { // Removed quizId from props
                 totalQuestions: quiz.questions.length,
                 userAnswers: selectedAnswers
             };
-            const res = await api.post('/results', resultData); // Send results to backend
+            const res = await api.post('/results', resultData);
             showMessage('Quiz submitted successfully!', 'success');
-            navigate(`/quiz-results/${res.data._id}`); // Navigate to results page with the new result ID
+            navigate(`/quiz-results/${res.data._id}`);
         } catch (error) {
-            console.error("Error submitting quiz results:", error.response?.data || error.message);
+            console.error("Error submitting quiz results:", error);
             showMessage(`Failed to submit quiz: ${error.response?.data?.message || error.message}`, 'error');
         }
     };
 
-    // Format time from seconds into MM:SS format
     const formatTime = (seconds) => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = seconds % 60;
         return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    const currentQuestion = quiz.questions[currentQuestionIndex]; // Get the current question object
+    const currentQuestion = quiz.questions[currentQuestionIndex];
 
     return (
-        <div className="container py-8 bg-light min-h-[calc(100vh-80px)]">
-            <h1 className="text-4xl font-bold text-primary-700 mb-6 text-center">{quiz.title}</h1>
-            <p className="text-lg text-dark mb-4 text-center">{quiz.description}</p>
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+            <div className="max-w-7xl mx-auto">
+                <h1 className="text-4xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                    {quiz.title}
+                </h1>
+                <p className="text-lg text-gray-300 mb-8 text-center">{quiz.description}</p>
 
-            {/* Initial quiz start screen */}
-            {!quizStarted && !quizFinished && (
-                <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto border border-primary-200">
-                    <p className="text-xl text-dark mb-4">Duration: {quiz.duration} minutes</p>
-                    <p className="text-xl text-dark mb-6">Total Questions: {quiz.questions.length}</p>
-                    <button
-                        onClick={startQuiz}
-                        className="bg-info text-white px-8 py-3 rounded-lg shadow-md hover:bg-blue-700 font-semibold text-lg"
-                    >
-                        Start Quiz
-                    </button>
-                </div>
-            )}
+                {!quizStarted && !quizFinished && (
+                    <div className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
+                        <p className="text-xl text-gray-300 mb-4">Duration: {quiz.duration} minutes</p>
+                        <p className="text-xl text-gray-300 mb-6">Total Questions: {quiz.questions.length}</p>
+                        <button
+                            onClick={startQuiz}
+                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
+                        >
+                            Start Quiz
+                        </button>
+                    </div>
+                )}
 
-            {/* Quiz taking interface */}
-            {quizStarted && !quizFinished && (
-                <div className="bg-white p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-primary-200 space-y-6">
-                    <div className="flex justify-between items-center mb-6 border-b pb-4 border-primary-200">
-                        <h2 className="text-2xl font-bold text-primary-700">Question {currentQuestionIndex + 1} of {quiz.questions.length}</h2>
-                        {/* Display time left, color changes to danger when less than 60 seconds */}
-                        <div className={`text-xl font-bold ${timeLeft < 60 ? 'text-danger' : 'text-info'}`}>
-                            Time Left: {formatTime(timeLeft)}
+                {quizStarted && !quizFinished && (
+                    <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-gray-700 space-y-6">
+                        <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-700">
+                            <h2 className="text-2xl font-bold text-white">
+                                Question {currentQuestionIndex + 1} of {quiz.questions.length}
+                            </h2>
+                            <div className={`text-xl font-bold ${timeLeft < 60 ? 'text-red-400' : 'text-cyan-400'}`}>
+                                Time Left: {formatTime(timeLeft)}
+                            </div>
+                        </div>
+
+                        <p className="text-lg text-gray-300 mb-6">{currentQuestion.questionText}</p>
+
+                        <div className="space-y-4">
+                            {currentQuestion.options.map((option, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => handleOptionSelect(option)}
+                                    className={`w-full text-left p-4 rounded-md border text-lg transition-all duration-300 ${
+                                        selectedAnswers[currentQuestionIndex] === option
+                                            ? 'bg-blue-600/30 border-blue-400 text-white shadow-md'
+                                            : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500'
+                                    }`}
+                                >
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="flex justify-between mt-8">
+                            <button
+                                onClick={handlePrevious}
+                                disabled={currentQuestionIndex === 0}
+                                className="bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-gray-500 disabled:opacity-50 font-semibold text-base transition-all duration-300"
+                            >
+                                Previous
+                            </button>
+                            <button
+                                onClick={handleNext}
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-blue-600 hover:to-cyan-600 font-semibold text-base transition-all duration-300 hover:-translate-y-1"
+                            >
+                                {currentQuestionIndex === quiz.questions.length - 1 ? 'Submit Quiz' : 'Next'}
+                            </button>
                         </div>
                     </div>
+                )}
 
-                    <p className="text-lg text-dark mb-6">{currentQuestion.questionText}</p>
-
-                    <div className="space-y-4">
-                        {currentQuestion.options.map((option, index) => (
-                            <button
-                                key={index}
-                                onClick={() => handleOptionSelect(option)}
-                                className={`w-full text-left p-4 rounded-md border text-lg transition duration-300 ${selectedAnswers[currentQuestionIndex] === option
-                                    ? 'bg-primary-200 border-primary-500 text-primary-800 shadow-md' // Style for selected option
-                                    : 'bg-light border-primary-300 text-dark hover:bg-primary-100 hover:border-primary-400' // Default style
-                                    }`}
-                            >
-                                {option}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="flex justify-between mt-8">
+                {quizFinished && (
+                    <div className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
+                        <h2 className="text-3xl font-bold text-green-400 mb-4">Quiz Completed!</h2>
+                        <p className="text-xl text-gray-300 mb-6">Your results are being processed and saved.</p>
                         <button
-                            onClick={handlePrevious}
-                            disabled={currentQuestionIndex === 0} // Disable 'Previous' on first question
-                            className="bg-gray-400 text-white px-6 py-3 rounded-lg shadow-md hover:bg-gray-500 disabled:opacity-50 font-semibold text-base"
+                            onClick={() => navigate('/dashboard')}
+                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
                         >
-                            Previous
-                        </button>
-                        <button
-                            onClick={handleNext}
-                            className="bg-primary-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-base"
-                        >
-                            {currentQuestionIndex === quiz.questions.length - 1 ? 'Submit Quiz' : 'Next'}
+                            Go to Dashboard
                         </button>
                     </div>
-                </div>
-            )}
-
-            {/* Quiz completion message */}
-            {quizFinished && (
-                <div className="text-center p-8 bg-white rounded-xl shadow-lg max-w-md mx-auto border border-primary-200">
-                    <h2 className="text-3xl font-bold text-secondary-600 mb-4">Quiz Completed!</h2>
-                    <p className="text-xl text-dark mb-6">Your results are being processed and saved.</p>
-                    <button
-                        onClick={() => navigate('/dashboard')} // Use React Router navigate
-                        className="bg-primary-600 text-white px-8 py-3 rounded-lg shadow-md hover:bg-primary-700 font-semibold text-lg"
-                    >
-                        Go to Dashboard
-                    </button>
-                </div>
-            )}
+                )}
+            </div>
         </div>
     );
 };
