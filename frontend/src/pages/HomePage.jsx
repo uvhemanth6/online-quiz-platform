@@ -1,7 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Reusable component for animating elements on scroll
 const FadeInOnScroll = ({ children, className = '' }) => {
     const domRef = useRef();
     useEffect(() => {
@@ -30,162 +29,207 @@ const FadeInOnScroll = ({ children, className = '' }) => {
 
 const HomePage = () => {
     const navigate = useNavigate();
+    const featuresRef = useRef(null);
+
+    const scrollToFeatures = () => {
+        featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+    };
 
     return (
         <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 overflow-x-hidden">
             {/* Hero Section */}
             <section className="relative w-full py-24 px-4 text-center flex flex-col items-center justify-center min-h-screen z-10">
                 <FadeInOnScroll>
-                    <h1 className="text-5xl sm:text-7xl font-extrabold mb-6 leading-tight">
+                    <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold mb-6 leading-tight">
                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
-                            Quizzer
-                        </span>: Master Your Knowledge
+                            QuizMaster
+                        </span> - Test Your Knowledge
                     </h1>
                 </FadeInOnScroll>
                 <FadeInOnScroll className="delay-100">
-                    <p className="text-lg sm:text-xl text-gray-300 mb-12 max-w-4xl">
-                        Dive into a universe of interactive quizzes designed to challenge and educate. 
-                        Whether you're a student, professional, or just curious, our platform offers 
-                        a seamless and engaging learning experience.
+                    <p className="text-lg sm:text-xl text-gray-300 mb-12 max-w-3xl">
+                        A free platform for learners to take timed quizzes and for educators to create them.
+                        Perfect for exam preparation and interactive learning.
                     </p>
                 </FadeInOnScroll>
                 <FadeInOnScroll className="delay-200">
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
                         <button
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
                             onClick={() => navigate('/register')}
                         >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
                             Get Started
                         </button>
                         <button
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 px-8 py-4 rounded-full text-lg font-semibold hover:bg-cyan-400/10 transition-all duration-300 hover:-translate-y-1"
-                            onClick={() => navigate('/login')}
+                            className="bg-transparent text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 px-8 py-4 rounded-full text-lg font-semibold hover:bg-cyan-400/10 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
+                            onClick={scrollToFeatures}
                         >
-                            Login
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                            </svg>
+                            Explore More
                         </button>
                     </div>
                 </FadeInOnScroll>
             </section>
 
             {/* Features Section */}
-            <section className="w-full py-24 px-4 bg-gray-800/40 backdrop-blur-sm">
-                <div className="container mx-auto text-center">
-                    <FadeInOnScroll>
-                        <h2 className="text-4xl font-bold text-white mb-16">
-                            Key Features
+            <section ref={featuresRef} className="w-full py-24 px-4 bg-gray-800/40 backdrop-blur-sm">
+                <div className="container mx-auto">
+                    <FadeInOnScroll className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
+                            Platform Features
                         </h2>
+                        <p className="text-lg text-gray-400 max-w-3xl mx-auto">
+                            Everything you need for effective learning and teaching
+                        </p>
                     </FadeInOnScroll>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {/* Feature Card 1 */}
-                        <FadeInOnScroll className="delay-100">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-cyan-400/30 transition-all duration-500 hover:-translate-y-2 shadow-lg hover:shadow-xl">
-                                <div className="text-cyan-400 mb-6">
-                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {[
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                     </svg>
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-3">Timed Challenges</h3>
-                                <p className="text-gray-400">
-                                    Test your speed and accuracy with timed quizzes across various categories, pushing your limits.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
-
-                        {/* Feature Card 2 */}
-                        <FadeInOnScroll className="delay-200">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-blue-400/30 transition-all duration-500 hover:-translate-y-2 shadow-lg hover:shadow-xl">
-                                <div className="text-blue-400 mb-6">
-                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                ),
+                                title: "Timed Quizzes",
+                                description: "Take quizzes with countdown timers to simulate exam conditions",
+                                color: "text-green-400"
+                            },
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                     </svg>
-                                </div>
-                                <h3 className="text-2xl font-bold text-white mb-3">Admin Control</h3>
-                                <p className="text-gray-400">
-                                    Admins can effortlessly create, manage, and evaluate quizzes with a powerful dashboard.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
-
-                        {/* Feature Card 3 */}
-                        <FadeInOnScroll className="delay-300">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-purple-400/30 transition-all duration-500 hover:-translate-y-2 shadow-lg hover:shadow-xl">
-                                <div className="text-purple-400 mb-6">
-                                    <svg className="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.001 12.001 0 002.92 12c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                ),
+                                title: "Admin Dashboard",
+                                description: "Create and manage quizzes with our intuitive admin interface",
+                                color: "text-blue-400"
+                            },
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                     </svg>
+                                ),
+                                title: "Instant Results",
+                                description: "Get your score immediately after quiz submission",
+                                color: "text-purple-400"
+                            },
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                    </svg>
+                                ),
+                                title: "Multiple Categories",
+                                description: "Quizzes available across various subjects and topics",
+                                color: "text-yellow-400"
+                            },
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                ),
+                                title: "Secure Access",
+                                description: "JWT authentication protects all user data",
+                                color: "text-red-400"
+                            },
+                            {
+                                icon: (
+                                    <svg className="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                ),
+                                title: "Progress Tracking",
+                                description: "View your quiz history and improvement over time",
+                                color: "text-cyan-400"
+                            }
+                        ].map((feature, index) => (
+                            <FadeInOnScroll key={index} className={`delay-${(index + 1) * 100}`}>
+                                <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-cyan-400/30 transition-all duration-500 hover:-translate-y-2 h-full">
+                                    <div className={`${feature.color} mb-6`}>
+                                        {feature.icon}
+                                    </div>
+                                    <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
+                                    <p className="text-gray-400">{feature.description}</p>
                                 </div>
-                                <h3 className="text-2xl font-bold text-white mb-3">Instant Results</h3>
-                                <p className="text-gray-400">
-                                    Get immediate scores and detailed performance analysis after each quiz submission.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
+                            </FadeInOnScroll>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* How It Works Section */}
-            <section className="w-full py-24 px-4 bg-gray-800/30 backdrop-blur-sm">
-                <div className="container mx-auto text-center">
-                    <FadeInOnScroll>
-                        <h2 className="text-4xl font-bold text-white mb-16">
+            {/* How It Works */}
+            <section className="w-full py-24 px-4 bg-gray-800/20">
+                <div className="container mx-auto max-w-4xl">
+                    <FadeInOnScroll className="text-center mb-16">
+                        <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
                             How It Works
                         </h2>
                     </FadeInOnScroll>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <FadeInOnScroll className="delay-100">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-cyan-400/30 transition-all duration-500 hover:-translate-y-1 shadow-lg">
-                                <div className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400 text-6xl font-extrabold mb-4">1</div>
-                                <h3 className="text-2xl font-semibold text-white mb-2">Register/Login</h3>
-                                <p className="text-gray-400">
-                                    Create your free account or log in to access the platform.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
-                        <FadeInOnScroll className="delay-200">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-blue-400/30 transition-all duration-500 hover:-translate-y-1 shadow-lg">
-                                <div className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-400 text-6xl font-extrabold mb-4">2</div>
-                                <h3 className="text-2xl font-semibold text-white mb-2">Explore Quizzes</h3>
-                                <p className="text-gray-400">
-                                    Browse a wide range of quizzes by category and difficulty.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
-                        <FadeInOnScroll className="delay-300">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-purple-400/30 transition-all duration-500 hover:-translate-y-1 shadow-lg">
-                                <div className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 text-6xl font-extrabold mb-4">3</div>
-                                <h3 className="text-2xl font-semibold text-white mb-2">Take the Quiz</h3>
-                                <p className="text-gray-400">
-                                    Answer questions within the time limit and submit your responses.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
-                        <FadeInOnScroll className="delay-400">
-                            <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-green-400/30 transition-all duration-500 hover:-translate-y-1 shadow-lg">
-                                <div className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-400 text-6xl font-extrabold mb-4">4</div>
-                                <h3 className="text-2xl font-semibold text-white mb-2">View Results</h3>
-                                <p className="text-gray-400">
-                                    Get instant feedback and detailed insights into your performance.
-                                </p>
-                            </div>
-                        </FadeInOnScroll>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        {[
+                            {
+                                step: "1",
+                                title: "Sign Up",
+                                description: "Create your free account as a learner or educator",
+                                icon: (
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                )
+                            },
+                            {
+                                step: "2",
+                                title: "Take or Create",
+                                description: "Browse quizzes or create your own (admin only)",
+                                icon: (
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                )
+                            },
+                            {
+                                step: "3",
+                                title: "Get Results",
+                                description: "View your score and track your progress",
+                                icon: (
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                    </svg>
+                                )
+                            }
+                        ].map((step, index) => (
+                            <FadeInOnScroll key={index} className={`delay-${(index + 1) * 100}`}>
+                                <div className="bg-gray-800/50 p-8 rounded-xl border border-gray-700 text-center h-full">
+                                    <div className="text-cyan-400 mb-4 mx-auto w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-2xl font-bold">
+                                        {step.step}
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
+                                    <p className="text-gray-400">{step.description}</p>
+                                </div>
+                            </FadeInOnScroll>
+                        ))}
                     </div>
                 </div>
             </section>
 
-            {/* Call to Action Section */}
+            {/* Final CTA */}
             <section className="w-full py-24 px-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white text-center">
-                <div className="container mx-auto">
+                <div className="container mx-auto max-w-3xl">
                     <FadeInOnScroll>
-                        <h2 className="text-4xl font-bold mb-8">
-                            Ready to Ignite Your Mind?
+                        <h2 className="text-3xl md:text-4xl font-bold mb-8">
+                            Ready to Start Learning?
                         </h2>
                     </FadeInOnScroll>
                     <FadeInOnScroll className="delay-100">
-                        <p className="text-xl text-blue-100 mb-10 max-w-3xl mx-auto">
-                            Join thousands of users who are challenging themselves daily. 
-                            Sign up now and start your quiz journey!
+                        <p className="text-xl text-blue-100 mb-10">
+                            Join our community of learners and educators today - completely free!
                         </p>
                     </FadeInOnScroll>
                     <FadeInOnScroll className="delay-200">
@@ -193,17 +237,26 @@ const HomePage = () => {
                             onClick={() => navigate('/register')}
                             className="bg-white text-blue-700 hover:text-blue-800 px-10 py-4 rounded-full text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                         >
-                            Sign Up for Free
+                            Get Started Now
                         </button>
                     </FadeInOnScroll>
                 </div>
             </section>
 
             {/* Footer */}
-            <footer className="w-full py-8 bg-gray-900/80 text-gray-400 text-center text-sm border-t border-gray-800">
-                <div className="container mx-auto">
-                    <p>&copy; 2025 Quizzer. All rights reserved.</p>
-                    <p className="mt-2">Designed with passion and knowledge.</p>
+            <footer className="w-full py-12 bg-gray-900/80 text-gray-400 border-t border-gray-800">
+                <div className="container mx-auto px-4 text-center">
+                    <div className="mb-8">
+                        <h3 className="text-xl font-semibold text-white mb-4">QuizMaster</h3>
+                        <p className="max-w-2xl mx-auto">
+                            A free online quiz platform for learners and educators.
+                        </p>
+                    </div>
+                    <div className="pt-8 border-t border-gray-800">
+                        <p className="text-sm">
+                            &copy; {new Date().getFullYear()} QuizMaster. All rights reserved.
+                        </p>
+                    </div>
                 </div>
             </footer>
         </div>

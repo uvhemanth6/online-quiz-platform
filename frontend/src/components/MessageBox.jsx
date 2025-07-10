@@ -36,17 +36,36 @@ const MessageBox = ({ message, onClose }) => {
 
     if (!message?.text && !isVisible) return null;
 
-    // Determine message type (success or error)
-    const isSuccess = message.type === 'success';
-    const bgColor = isSuccess ? 'bg-green-500' : 'bg-red-500';
-    const borderColor = isSuccess ? 'border-green-600' : 'border-red-600';
+    // Determine message type and color
+    const getMessageColor = () => {
+        // If type is explicitly provided
+        if (message.type === 'success') return { bg: 'bg-green-500', border: 'border-green-600' };
+        if (message.type === 'error') return { bg: 'bg-red-500', border: 'border-red-600' };
+        
+        // Auto-detect based on message content (case insensitive)
+        const text = message.text.toLowerCase();
+        const successKeywords = ['success', 'logged in', 'logged out', 'welcome', 'thank you'];
+        const errorKeywords = ['error', 'fail', 'invalid', 'wrong', 'rejected'];
+        
+        if (successKeywords.some(keyword => text.includes(keyword))) {
+            return { bg: 'bg-green-500', border: 'border-green-600' };
+        }
+        if (errorKeywords.some(keyword => text.includes(keyword))) {
+            return { bg: 'bg-red-500', border: 'border-red-600' };
+        }
+        
+        // Default to green for positive messages
+        return { bg: 'bg-green-500', border: 'border-green-600' };
+    };
+
+    const { bg, border } = getMessageColor();
 
     return (
         <div className={`
             fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border
             transform transition-all duration-300 ease-out
             ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-            ${bgColor} ${borderColor}
+            ${bg} ${border}
             min-w-[280px] max-w-sm
         `}>
             <div className="flex items-start justify-between gap-3">

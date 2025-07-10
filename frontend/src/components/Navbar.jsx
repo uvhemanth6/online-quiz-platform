@@ -44,7 +44,7 @@ const NavBar = () => {
                         to="/"
                         className="text-2xl font-bold text-primary-100 hover:text-white transition-colors duration-200"
                     >
-                        Quizzer
+                        QuizMaster
                     </Link>
 
                     {/* Mobile Menu Button */}
