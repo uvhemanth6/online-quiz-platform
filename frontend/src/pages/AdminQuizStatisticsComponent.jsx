@@ -1,152 +1,138 @@
-// frontend/src/pages/AdminQuizStatisticsComponent.jsx // Component to display overall quiz stats for admin
+// frontend/src/pages/AdminQuizStatisticsComponent.jsx // Component to display overall quiz stats for admin (Dark Theme with Inline Search)
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-// No useNavigate or useParams needed here as it receives data via props
 
 const AdminQuizStatisticsComponent = ({ quizzes, allResults }) => {
-    // Log the incoming props for debugging
-    console.log("AdminStats: Quizzes Prop:", quizzes);
-    console.log("AdminStats: All Results Prop:", allResults);
+    const [searchTerm, setSearchTerm] = useState(''); // State for the search input
 
-    // If there are no quiz results, display a message.
-    if (allResults.length === 0) {
-        return <div className="text-center text-gray-600 text-md py-4">No user results available yet.</div>;
-    }
-
-    // Calculate average scores per quiz for overall statistics
-    // Initialize quiz statistics based on the 'quizzes' prop
+    // Initialize quizStats with all quizzes, setting up their initial counters
     const quizStats = quizzes.reduce((acc, quiz) => {
-        // Ensure quiz.questions is an array before accessing .length
-        const totalQuestionsInQuiz = Array.isArray(quiz.questions) ? quiz.questions.length : 0;
-
         acc[quiz._id] = {
             title: quiz.title,
             totalSubmissions: 0,
-            totalCorrectAnswers: 0, // Track total correct answers
-            totalPossibleAnswers: 0, // Track total possible answers across all submissions
-            averageScorePercentage: 0, // Will store percentage
-            totalQuestionsInQuiz: totalQuestionsInQuiz // Store original quiz's total questions
+            totalCorrectAnswers: 0,
+            totalPossibleAnswers: 0,
+            averageScorePercentage: 0,
         };
         return acc;
     }, {});
 
-    console.log("AdminStats: Initialized quizStats:", quizStats);
-
-    // Aggregate results from 'allResults' into the 'quizStats'
+    // Iterate through all results to populate quizStats
     allResults.forEach(result => {
-        // Access result.quizId._id if quizId is an object (populated), otherwise use result.quizId directly
         const currentQuizId = result.quizId && typeof result.quizId === 'object' ? result.quizId._id : result.quizId;
 
-        // Ensure the quiz ID from the result exists in our quiz list
         if (quizStats[currentQuizId]) {
             quizStats[currentQuizId].totalSubmissions++;
             quizStats[currentQuizId].totalCorrectAnswers += result.score;
-            // totalPossibleAnswers for a quiz is total questions * number of submissions for that quiz
-            // This is more accurate for an overall average percentage.
-            // Use the stored totalQuestionsInQuiz from the quizStats object itself
-            quizStats[currentQuizId].totalPossibleAnswers += quizStats[currentQuizId].totalQuestionsInQuiz;
-        } else {
-            console.warn(`AdminStats: Result with quizId ${currentQuizId} does not match any known quiz.`);
+            quizStats[currentQuizId].totalPossibleAnswers += result.totalQuestions;
         }
     });
 
-    console.log("AdminStats: After Aggregation - quizStats:", quizStats);
-
-    // Calculate the average score percentage for each quiz
+    // Prepare data for the chart
     const chartData = [];
     Object.keys(quizStats).forEach(quizId => {
         const stats = quizStats[quizId];
         let calculatedAverage = 0;
 
-        // Log values before calculation
-        console.log(`AdminStats: Calculating for Quiz "${stats.title}" (ID: ${quizId})`);
-        console.log(`  totalCorrectAnswers: ${stats.totalCorrectAnswers}`);
-        console.log(`  totalSubmissions: ${stats.totalSubmissions}`);
-        console.log(`  totalQuestionsInQuiz: ${stats.totalQuestionsInQuiz}`);
-        console.log(`  totalPossibleAnswers (aggregated): ${stats.totalPossibleAnswers}`);
-
-
-        if (stats.totalSubmissions > 0 && stats.totalQuestionsInQuiz > 0 && stats.totalPossibleAnswers > 0) {
-            // Calculate average score percentage based on total correct answers across all submissions
-            // divided by total possible answers across all submissions for that quiz.
+        if (stats.totalSubmissions > 0 && stats.totalPossibleAnswers > 0) {
             calculatedAverage = ((stats.totalCorrectAnswers / stats.totalPossibleAnswers) * 100).toFixed(2);
-        } else {
-            console.warn(`AdminStats: Skipping average calculation for "${stats.title}" due to zero submissions, questions, or possible answers.`);
         }
-
-        stats.averageScorePercentage = parseFloat(calculatedAverage); // Store as number for chart
 
         chartData.push({
             name: stats.title,
-            'Average Score (%)': stats.averageScorePercentage
+            'Average Score (%)': parseFloat(calculatedAverage)
         });
     });
 
-    console.log("AdminStats: Final Chart Data:", chartData);
+    // Filtered results for the table based on searchTerm
+    const filteredResults = allResults.filter(result => {
+        const userDisplayName = result.userId ? `${result.userId.name} ${result.userId.email}` : 'N/A';
+        const quizTitle = result.quizTitle || 'N/A';
+        const lowerCaseSearchTerm = searchTerm.toLowerCase();
+
+        return (
+            userDisplayName.toLowerCase().includes(lowerCaseSearchTerm) ||
+            quizTitle.toLowerCase().includes(lowerCaseSearchTerm)
+        );
+    });
+
+    if (allResults.length === 0) {
+        return <div className="text-center text-dark-text-muted text-md py-4">No user results available yet.</div>;
+    }
 
     return (
-        <div className="bg-white p-6 rounded-xl shadow-md border border-primary-100 mt-6">
-            <h3 className="text-2xl font-bold text-primary-700 mb-4">Overall Quiz Performance</h3>
+        <div className="bg-dark-bg-light p-6 rounded-xl shadow-glow-md border border-dark-bg-lighter mt-6">
+            <h3 className="text-2xl font-bold text-dark-text-light mb-4">Overall Quiz Performance</h3>
 
-            {/* Bar Chart for Average Scores */}
             <div className="mb-8" style={{ width: '100%', height: 300 }}>
-                {chartData.some(data => data['Average Score (%)'] > 0) ? (
-                    <ResponsiveContainer>
-                        <BarChart
-                            data={chartData}
-                            margin={{
-                                top: 5,
-                                right: 30,
-                                left: 20,
-                                bottom: 5,
-                            }}
-                        >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" angle={-15} textAnchor="end" height={60} interval={0} />
-                            <YAxis domain={[0, 100]} label={{ value: 'Average Score (%)', angle: -90, position: 'insideLeft' }} />
-                            <Tooltip formatter={(value) => `${value}%`} />
-                            <Legend />
-                            {/* Define the gradient for the bars */}
-                            <defs>
-                                <linearGradient id="colorUv" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.9}/> {/* primary-500 */}
-                                    <stop offset="95%" stopColor="#818cf8" stopOpacity={0.8}/> {/* primary-400 */}
-                                </linearGradient>
-                            </defs>
-                            {/* Apply the gradient fill to the bars */}
-                            <Bar dataKey="Average Score (%)" fill="url(#colorUv)" />
-                        </BarChart>
-                    </ResponsiveContainer>
-                ) : (
-                    <div className="text-center text-gray-600 text-lg py-10">No sufficient data to display chart. Take some quizzes!</div>
-                )}
+                 {chartData.some(data => data['Average Score (%)'] > 0) ? (
+                     <ResponsiveContainer width="100%" height="100%">
+                         <BarChart
+                             data={chartData}
+                             margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                         >
+                             <CartesianGrid strokeDasharray="3 3" stroke="#4a4a4a" />
+                             <XAxis dataKey="name" angle={-15} textAnchor="end" height={60} interval={0} stroke="#9CA3AF" fill="#9CA3AF" />
+                             <YAxis domain={[0, 100]} label={{ value: 'Average Score (%)', angle: -90, position: 'insideLeft', fill: '#9CA3AF' }} stroke="#9CA3AF" />
+                             <Tooltip
+                                contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #2A2A2A', color: '#E5E7EB' }}
+                                itemStyle={{ color: '#E5E7EB' }}
+                             />
+                             <Legend wrapperStyle={{ color: '#E5E7EB', paddingTop: '10px' }} />
+                             <defs>
+                                 <linearGradient id="colorAverage" x1="0" y1="0" x2="0" y2="1">
+                                     <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.9}/>
+                                     <stop offset="95%" stopColor="#A78BFA" stopOpacity={0.8}/>
+                                 </linearGradient>
+                             </defs>
+                             <Bar dataKey="Average Score (%)" fill="url(#colorAverage)" />
+                         </BarChart>
+                     </ResponsiveContainer>
+                 ) : (
+                     <div className="text-center text-dark-text-muted text-lg py-10">No sufficient data to display chart with non-zero average scores. Take some quizzes!</div>
+                 )}
             </div>
 
-            <h3 className="text-2xl font-bold text-primary-700 mt-8 mb-4">All User Submissions</h3>
+            {/* Inline Search Input for User Submissions */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-8 mb-4">
+                <h3 className="text-2xl font-bold text-dark-text-light mb-4 sm:mb-0">All User Submissions</h3>
+                <input
+                    type="text"
+                    placeholder="Search by user, email, or quiz title..."
+                    className="w-full sm:w-1/2 p-3 rounded-lg bg-dark-bg-lighter text-dark-text-light border border-dark-bg-lighter focus:ring-accent-primary-light focus:border-transparent transition-all duration-200"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
             <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-primary-200 rounded-xl">
+                <table className="min-w-full bg-dark-bg-light border border-dark-bg-lighter rounded-xl">
                     <thead>
-                        <tr className="bg-primary-100 text-primary-700 uppercase text-sm leading-normal">
+                        <tr className="bg-dark-bg-lighter text-dark-text-muted uppercase text-sm leading-normal">
                             <th className="py-3 px-6 text-left">User Name / Email</th>
                             <th className="py-3 px-6 text-left">Quiz</th>
                             <th className="py-3 px-6 text-left">Score</th>
                             <th className="py-3 px-6 text-left">Date</th>
                         </tr>
                     </thead>
-                    <tbody className="text-dark text-sm">
-                        {/* Display individual user submissions */}
-                        {allResults.map(result => (
-                            <tr key={result._id} className="border-b border-primary-200 hover:bg-primary-50">
-                                <td className="py-3 px-6 text-left whitespace-nowrap">
-                                    {/* Display user name and email if populated by backend */}
-                                    {result.userId ? `${result.userId.name} (${result.userId.email})` : 'N/A'}
-                                </td>
-                                <td className="py-3 px-6 text-left">{result.quizId ? result.quizId.title : result.quizTitle || 'N/A'}</td>
-                                <td className="py-3 px-6 text-left">{result.score} / {result.totalQuestions}</td>
-                                <td className="py-3 px-6 text-left">{new Date(result.submittedAt).toLocaleString()}</td>
+                    <tbody className="text-dark-text-light text-sm">
+                        {filteredResults.length === 0 ? (
+                            <tr>
+                                <td colSpan="4" className="py-4 text-center text-dark-text-muted">No matching submissions found.</td>
                             </tr>
-                        ))}
+                        ) : (
+                            filteredResults.map(result => (
+                                <tr key={result._id} className="border-b border-dark-bg-lighter hover:bg-dark-bg">
+                                    <td className="py-3 px-6 text-left whitespace-nowrap">
+                                        {result.userId ? `${result.userId.name} (${result.userId.email})` : 'N/A'}
+                                    </td>
+                                    <td className="py-3 px-6 text-left">{result.quizTitle || 'N/A'}</td>
+                                    <td className="py-3 px-6 text-left">{result.score} / {result.totalQuestions}</td>
+                                    <td className="py-3 px-6 text-left">{new Date(result.submittedAt).toLocaleString()}</td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
                 </table>
             </div>
