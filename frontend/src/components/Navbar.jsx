@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { Button } from './ui/Button';
 
 const NavBar = () => {
     const { isAuthenticated, logout, user } = useAuth();
@@ -36,7 +37,7 @@ const NavBar = () => {
     }, [isMobileMenuOpen]);
 
     return (
-        <nav className="bg-primary-800 text-white sticky top-0 z-40 shadow-lg">
+        <nav className="bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 animate-gradient-x bg-[length:400%_400%] text-white sticky top-0 z-40 shadow-lg">
             <div className="container mx-auto px-4 py-3">
                 <div className="flex justify-between items-center">
                     {/* Logo/Brand */}
@@ -81,12 +82,12 @@ const NavBar = () => {
                                 )}
                                 <div className="flex items-center space-x-4">
                                     <span className="text-primary-100">Hi, {user?.name || 'User'}</span>
-                                    <button
+                                    <Button
                                         onClick={handleLogout}
-                                        className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                        className="bg-pink-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-semibold"
                                     >
                                         Logout
-                                    </button>
+                                    </Button>
                                 </div>
                             </>
                         ) : (
@@ -94,12 +95,12 @@ const NavBar = () => {
                                 <Link to="/login" className="hover:text-primary-200 transition-colors duration-200">
                                     Login
                                 </Link>
-                                <Link 
-                                    to="/register" 
-                                    className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition-colors duration-200"
+                                <Button
+                                    onClick={() => handleNavigation('/register')}
+                                    className="bg-pink-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-semibold"
                                 >
                                     Register
-                                </Link>
+                                </Button>
                             </>
                         )}
                     </div>
@@ -136,12 +137,12 @@ const NavBar = () => {
                                 )}
                                 <div className="pt-2 border-t border-primary-700">
                                     <span className="block py-2 text-primary-100">Logged in as {user?.name || 'User'}</span>
-                                    <button
+                                    <Button
                                         onClick={handleLogout}
-                                        className="w-full bg-primary-600 hover:bg-primary-700 text-white py-2 rounded-lg transition-colors duration-200"
+                                        className="w-full bg-pink-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors duration-200 font-semibold"
                                     >
                                         Logout
-                                    </button>
+                                    </Button>
                                 </div>
                             </>
                         ) : (
@@ -153,13 +154,12 @@ const NavBar = () => {
                                 >
                                     Login
                                 </Link>
-                                <Link 
-                                    to="/register" 
-                                    className="bg-primary-600 hover:bg-primary-700 text-white py-2 text-center rounded-lg transition-colors duration-200"
-                                    onClick={() => setIsMobileMenuOpen(false)}
+                                <Button 
+                                    onClick={() => { handleNavigation('/register'); setIsMobileMenuOpen(false); }}
+                                    className="bg-pink-600 hover:bg-purple-700 text-white py-2 text-center rounded-lg transition-colors duration-200 font-semibold"
                                 >
                                     Register
-                                </Link>
+                                </Button>
                             </>
                         )}
                     </div>

@@ -38,35 +38,30 @@ const MessageBox = ({ message, onClose }) => {
 
     // Determine message type and color
     const getMessageColor = () => {
-        // If type is explicitly provided
-        if (message.type === 'success') return { bg: 'bg-green-500', border: 'border-green-600' };
-        if (message.type === 'error') return { bg: 'bg-red-500', border: 'border-red-600' };
-        
-        // Auto-detect based on message content (case insensitive)
+        if (message.type === 'success') return { bg: 'bg-green-500/90', border: 'border-green-400/80', shadow: 'shadow-green-400/40' };
+        if (message.type === 'error') return { bg: 'bg-pink-600/90', border: 'border-pink-400/80', shadow: 'shadow-pink-400/40' };
         const text = message.text.toLowerCase();
         const successKeywords = ['success', 'logged in', 'logged out', 'welcome', 'thank you'];
         const errorKeywords = ['error', 'fail', 'invalid', 'wrong', 'rejected'];
-        
         if (successKeywords.some(keyword => text.includes(keyword))) {
-            return { bg: 'bg-green-500', border: 'border-green-600' };
+            return { bg: 'bg-green-500/90', border: 'border-green-400/80', shadow: 'shadow-green-400/40' };
         }
         if (errorKeywords.some(keyword => text.includes(keyword))) {
-            return { bg: 'bg-red-500', border: 'border-red-600' };
+            return { bg: 'bg-pink-600/90', border: 'border-pink-400/80', shadow: 'shadow-pink-400/40' };
         }
-        
-        // Default to green for positive messages
-        return { bg: 'bg-green-500', border: 'border-green-600' };
+        return { bg: 'bg-purple-500/90', border: 'border-purple-400/80', shadow: 'shadow-purple-400/40' };
     };
 
-    const { bg, border } = getMessageColor();
+    const { bg, border, shadow } = getMessageColor();
 
     return (
         <div className={`
-            fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg border
+            fixed top-4 right-4 z-50 p-4 rounded-2xl border-2 backdrop-blur-xl
             transform transition-all duration-300 ease-out
             ${isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
-            ${bg} ${border}
+            ${bg} ${border} ${shadow}
             min-w-[280px] max-w-sm
+            animate-pulse border-gradient-to-r from-pink-400 via-purple-400 to-indigo-400
         `}>
             <div className="flex items-start justify-between gap-3">
                 <p className="text-white font-medium text-sm flex-grow">

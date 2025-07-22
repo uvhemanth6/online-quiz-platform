@@ -3,6 +3,9 @@ import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../api/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
+import { Label } from '../components/ui/Label';
 
 const TakeQuizPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
@@ -125,84 +128,92 @@ const TakeQuizPage = () => {
     const currentQuestion = quiz.questions[currentQuestionIndex];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="classic-bg min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                <h1 className="text-4xl font-extrabold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 drop-shadow-lg">
                     {quiz.title}
                 </h1>
                 <p className="text-lg text-gray-300 mb-8 text-center">{quiz.description}</p>
 
                 {!quizStarted && !quizFinished && (
-                    <div className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
-                        <p className="text-xl text-gray-300 mb-4">Duration: {quiz.duration} minutes</p>
-                        <p className="text-xl text-gray-300 mb-6">Total Questions: {quiz.questions.length}</p>
-                        <button
-                            onClick={startQuiz}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
-                        >
-                            Start Quiz
-                        </button>
-                    </div>
+                    <Card className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
+                        <CardContent>
+                            <p className="text-xl text-gray-300 mb-4">Duration: {quiz.duration} minutes</p>
+                            <p className="text-xl text-gray-300 mb-6">Total Questions: {quiz.questions.length}</p>
+                            <Button
+                                onClick={startQuiz}
+                                size="lg"
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
+                            >
+                                Start Quiz
+                            </Button>
+                        </CardContent>
+                    </Card>
                 )}
 
                 {quizStarted && !quizFinished && (
-                    <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-gray-700 space-y-6">
-                        <div className="flex justify-between items-center mb-6 border-b pb-4 border-gray-700">
-                            <h2 className="text-2xl font-bold text-white">
+                    <Card className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-gray-700 space-y-6">
+                        <CardHeader className="flex justify-between items-center mb-6 border-b pb-4 border-gray-700">
+                            <CardTitle className="text-2xl font-bold text-white">
                                 Question {currentQuestionIndex + 1} of {quiz.questions.length}
-                            </h2>
+                            </CardTitle>
                             <div className={`text-xl font-bold ${timeLeft < 60 ? 'text-red-400' : 'text-cyan-400'}`}>
                                 Time Left: {formatTime(timeLeft)}
                             </div>
-                        </div>
-
-                        <p className="text-lg text-gray-300 mb-6">{currentQuestion.questionText}</p>
-
-                        <div className="space-y-4">
-                            {currentQuestion.options.map((option, index) => (
-                                <button
-                                    key={index}
-                                    onClick={() => handleOptionSelect(option)}
-                                    className={`w-full text-left p-4 rounded-md border text-lg transition-all duration-300 ${
-                                        selectedAnswers[currentQuestionIndex] === option
-                                            ? 'bg-blue-600/30 border-blue-400 text-white shadow-md'
-                                            : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500'
-                                    }`}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className="flex justify-between mt-8">
-                            <button
+                        </CardHeader>
+                        <CardContent>
+                            <Label className="text-lg text-gray-300 mb-6 block">{currentQuestion.questionText}</Label>
+                            <div className="space-y-4">
+                                {currentQuestion.options.map((option, index) => (
+                                    <Button
+                                        key={index}
+                                        type="button"
+                                        onClick={() => handleOptionSelect(option)}
+                                        variant={selectedAnswers[currentQuestionIndex] === option ? 'default' : 'outline'}
+                                        className={`w-full text-left p-4 rounded-md border text-lg transition-all duration-300 ${selectedAnswers[currentQuestionIndex] === option ? 'bg-blue-600/30 border-blue-400 text-white shadow-md' : 'bg-gray-700/50 border-gray-600 text-gray-300 hover:bg-gray-700 hover:border-gray-500'}`}
+                                    >
+                                        {option}
+                                    </Button>
+                                ))}
+                            </div>
+                        </CardContent>
+                        <CardFooter className="flex justify-between mt-8">
+                            <Button
                                 onClick={handlePrevious}
                                 disabled={currentQuestionIndex === 0}
-                                className="bg-gray-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-gray-500 disabled:opacity-50 font-semibold text-base transition-all duration-300"
+                                className="bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md font-semibold text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed border border-blue-700 hover:bg-blue-700 hover:text-white"
+                                style={{ opacity: 1, pointerEvents: currentQuestionIndex === 0 ? 'none' : 'auto' }}
                             >
                                 Previous
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                                 onClick={handleNext}
                                 className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-6 py-3 rounded-lg shadow-md hover:from-blue-600 hover:to-cyan-600 font-semibold text-base transition-all duration-300 hover:-translate-y-1"
                             >
                                 {currentQuestionIndex === quiz.questions.length - 1 ? 'Submit Quiz' : 'Next'}
-                            </button>
-                        </div>
-                    </div>
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 )}
 
                 {quizFinished && (
-                    <div className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
-                        <h2 className="text-3xl font-bold text-green-400 mb-4">Quiz Completed!</h2>
-                        <p className="text-xl text-gray-300 mb-6">Your results are being processed and saved.</p>
-                        <button
-                            onClick={() => navigate('/dashboard')}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
-                        >
-                            Go to Dashboard
-                        </button>
-                    </div>
+                    <Card className="text-center p-8 bg-gray-800/70 rounded-xl shadow-lg max-w-md mx-auto border border-gray-700">
+                        <CardHeader>
+                            <CardTitle className="text-3xl font-bold text-green-400 mb-4">Quiz Completed!</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-xl text-gray-300 mb-6">Your results are being processed and saved.</p>
+                        </CardContent>
+                        <CardFooter>
+                            <Button
+                                onClick={() => navigate('/dashboard')}
+                                size="lg"
+                                className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 font-semibold text-lg transition-all duration-300 hover:-translate-y-1"
+                            >
+                                Go to Dashboard
+                            </Button>
+                        </CardFooter>
+                    </Card>
                 )}
             </div>
         </div>

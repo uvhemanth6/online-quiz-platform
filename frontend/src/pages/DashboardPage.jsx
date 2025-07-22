@@ -5,6 +5,8 @@ import UserResultsComponent from './UserResultsComponent';
 import AdminQuizStatisticsComponent from './AdminQuizStatisticsComponent';
 import api from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
 
 const DashboardPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
@@ -81,23 +83,24 @@ const DashboardPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="classic-bg min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                <h1 className="text-4xl font-extrabold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 drop-shadow-lg">
                     {isAdmin ? 'Admin Dashboard' : 'Your Dashboard'}
                 </h1>
 
                 {isAdmin && (
                     <div className="mb-12 text-center">
-                        <button
+                        <Button
                             onClick={() => navigate('/create-quiz')}
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-8 py-3 rounded-full font-bold text-lg shadow-lg hover:from-blue-600 hover:to-cyan-600 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+                            size="lg"
+                            className="px-8 py-3 rounded-full font-bold text-lg shadow-lg bg-gradient-to-r from-blue-500 to-cyan-500 text-white hover:from-blue-600 hover:to-cyan-600 hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                         >
                             <svg className="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
                             </svg>
                             Create New Quiz
-                        </button>
+                        </Button>
                     </div>
                 )}
 
@@ -108,42 +111,45 @@ const DashboardPage = () => {
                         </div>
                     ) : (
                         quizzes.map(quiz => (
-                            <div key={quiz._id} className="bg-gray-800/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700 hover:border-cyan-400/30 transition-all duration-300 hover:-translate-y-2">
-                                <div className="mb-6">
-                                    <h3 className="text-2xl font-bold text-white mb-3">{quiz.title}</h3>
+                            <Card key={quiz._id} className="bg-gray-800/70 backdrop-blur-sm p-6 rounded-xl shadow-lg border border-gray-700 hover:border-cyan-400/30 transition-all duration-300 hover:-translate-y-2 flex flex-col h-full">
+                                <CardHeader className="mb-6">
+                                    <CardTitle className="text-2xl font-bold text-white mb-3">{quiz.title}</CardTitle>
+                                </CardHeader>
+                                <CardContent>
                                     <p className="text-gray-300 text-sm mb-4">{quiz.description}</p>
-                                    <div className="flex justify-between text-xs">
+                                    <div className="flex justify-between text-xs mb-4">
                                         <span className="bg-gray-700/50 px-3 py-1 rounded-full text-cyan-400">Category: {quiz.category}</span>
                                         <span className="bg-gray-700/50 px-3 py-1 rounded-full text-blue-400">{quiz.duration} mins</span>
                                         <span className="bg-gray-700/50 px-3 py-1 rounded-full text-purple-400">{quiz.questions.length} Qs</span>
                                     </div>
-                                </div>
-                                <div className="mt-auto flex space-x-3">
+                                </CardContent>
+                                <CardFooter className="mt-auto flex space-x-3">
                                     {!isAdmin ? (
-                                        <button
+                                        <Button
                                             onClick={() => navigate(`/take-quiz/${quiz._id}`)}
                                             className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-2 rounded-lg font-semibold hover:from-blue-600 hover:to-cyan-600 transition-all duration-300"
                                         >
                                             Take Quiz
-                                        </button>
+                                        </Button>
                                     ) : (
                                         <>
-                                            <button
+                                            <Button
                                                 onClick={() => navigate(`/edit-quiz/${quiz._id}`)}
-                                                className="flex-1 bg-gray-700 text-white py-2 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-300"
+                                                className="flex-1 bg-purple-600 text-white py-2 rounded-lg font-semibold transition-all duration-300 border border-purple-700 hover:bg-purple-700 hover:text-white"
                                             >
                                                 Edit
-                                            </button>
-                                            <button
+                                            </Button>
+                                            <Button
                                                 onClick={() => handleDeleteQuiz(quiz._id, quiz.title)}
+                                                variant="destructive"
                                                 className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 rounded-lg font-semibold hover:from-red-600 hover:to-pink-600 transition-all duration-300"
                                             >
                                                 Delete
-                                            </button>
+                                            </Button>
                                         </>
                                     )}
-                                </div>
-                            </div>
+                                </CardFooter>
+                            </Card>
                         ))
                     )}
                 </div>

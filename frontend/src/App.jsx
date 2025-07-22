@@ -28,9 +28,8 @@ const App = () => {
     }
 
     return (
-        // Apply overall themed background and min-height
         <div className="App min-h-screen flex flex-col bg-light text-dark">
-            {/* Navbar will now use React Router's useNavigate hook internally */}
+            {/* REMOVE: <Particles id="tsparticles" init={particlesInit} options={particlesOptions} className="fixed inset-0 z-0" /> */}
             <Navbar />
             <main className="flex-grow py-8"> {/* Added vertical padding for content */}
                 <Routes>

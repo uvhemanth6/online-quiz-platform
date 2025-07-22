@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
 
 const RegisterPage = () => {
     const { register: authRegister, showMessage } = useAuth();
@@ -24,76 +27,69 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
-            <div className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-md border border-gray-700 hover:border-cyan-400/30 transition-all duration-300">
-                <h2 className="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-6">
+        <div className="classic-bg min-h-screen flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900/90 to-blue-900/80 backdrop-blur-2xl p-10 rounded-3xl shadow-2xl w-full max-w-lg border border-blue-700/40 hover:border-cyan-400/50 transition-all duration-300">
+                <h2 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500 mb-10 drop-shadow-lg">
                     Create Account
                 </h2>
-                <form onSubmit={handleSubmit} className="space-y-5">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="name">
-                            Name
-                        </label>
-                        <input
+                        <Label htmlFor="name">Name</Label>
+                        <Input
                             type="text"
                             id="name"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="Your Name"
-                            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
                             required
+                            className="mt-2"
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="email">
-                            Email
-                        </label>
-                        <input
+                        <Label htmlFor="email">Email</Label>
+                        <Input
                             type="email"
                             id="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             placeholder="your@example.com"
-                            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
                             required
+                            className="mt-2"
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="password">
-                            Password
-                        </label>
-                        <input
+                        <Label htmlFor="password">Password</Label>
+                        <Input
                             type="password"
                             id="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="********"
-                            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
                             required
+                            className="mt-2"
                         />
                     </div>
                     <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="role">
-                            Role
-                        </label>
+                        <Label htmlFor="role">Role</Label>
                         <select
                             id="role"
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
-                            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent"
+                            className="w-full bg-gray-700/50 border border-gray-600 rounded-lg px-4 py-3 text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-transparent mt-2"
                         >
                             <option value="user" className="bg-gray-800">User</option>
                             <option value="admin" className="bg-gray-800">Admin</option>
                         </select>
                     </div>
-                    <button
+                    <Button
                         type="submit"
+                        size="lg"
                         className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-lg font-bold text-lg hover:from-blue-600 hover:to-cyan-600 transition-all duration-300 shadow-lg hover:shadow-xl hover:-translate-y-1"
                     >
                         Register Now
-                    </button>
+                    </Button>
                 </form>
-                <div className="mt-6 text-center">
+                <div className="mt-8 text-center">
                     <p className="text-gray-400">
                         Already have an account?{' '}
                         <span 

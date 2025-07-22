@@ -3,6 +3,7 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../api/axiosInstance';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
 
 const UserResultsComponent = ({ userId }) => {
     const [userResults, setUserResults] = useState([]);
@@ -65,12 +66,13 @@ const UserResultsComponent = ({ userId }) => {
                                     Submitted: {new Date(result.submittedAt).toLocaleDateString()}
                                 </p>
                             </div>
-                            <button
+                            <Button
                                 onClick={() => navigate(`/quiz-results/${result._id}`)}
-                                className="mt-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-md hover:from-blue-600 hover:to-cyan-600 text-sm font-semibold transition-all duration-300 hover:-translate-y-1"
+                                size="sm"
+                                className="mt-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white px-4 py-2 rounded-md hover:from-pink-600 hover:to-purple-600 text-sm font-semibold transition-all duration-300 hover:-translate-y-1 shadow-md"
                             >
                                 View Details
-                            </button>
+                            </Button>
                         </div>
                     );
                 })}

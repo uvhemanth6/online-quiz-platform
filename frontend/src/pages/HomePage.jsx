@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 
 const FadeInOnScroll = ({ children, className = '' }) => {
     const domRef = useRef();
@@ -36,7 +38,7 @@ const HomePage = () => {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-gray-100 overflow-x-hidden">
+        <div className="classic-bg min-h-screen flex flex-col items-center text-gray-100 overflow-x-hidden">
             {/* Hero Section */}
             <section className="relative w-full py-24 px-4 text-center flex flex-col items-center justify-center min-h-screen z-10">
                 <FadeInOnScroll>
@@ -54,24 +56,27 @@ const HomePage = () => {
                 </FadeInOnScroll>
                 <FadeInOnScroll className="delay-200">
                     <div className="flex flex-col sm:flex-row gap-4 sm:gap-6">
-                        <button
-                            className="bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
+                        <Button
+                            size="lg"
+                            className="rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
                             onClick={() => navigate('/register')}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                             </svg>
                             Get Started
-                        </button>
-                        <button
-                            className="bg-transparent text-cyan-400 border-2 border-cyan-400/50 hover:border-cyan-400 px-8 py-4 rounded-full text-lg font-semibold hover:bg-cyan-400/10 transition-all duration-300 hover:-translate-y-1 flex items-center justify-center gap-2"
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            className="rounded-full text-lg font-semibold border-cyan-400/50 hover:border-cyan-400 hover:bg-cyan-400/10 text-cyan-400 flex items-center justify-center gap-2"
                             onClick={scrollToFeatures}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                             </svg>
                             Explore More
-                        </button>
+                        </Button>
                     </div>
                 </FadeInOnScroll>
             </section>
@@ -151,13 +156,15 @@ const HomePage = () => {
                             }
                         ].map((feature, index) => (
                             <FadeInOnScroll key={index} className={`delay-${(index + 1) * 100}`}>
-                                <div className="bg-gray-800/70 p-8 rounded-xl border border-gray-700 hover:border-cyan-400/30 transition-all duration-500 hover:-translate-y-2 h-full">
-                                    <div className={`${feature.color} mb-6`}>
-                                        {feature.icon}
-                                    </div>
-                                    <h3 className="text-2xl font-bold text-white mb-3">{feature.title}</h3>
-                                    <p className="text-gray-400">{feature.description}</p>
-                                </div>
+                                <Card className="hover:border-cyan-400/30 transition-all duration-500 hover:-translate-y-2 h-full bg-gray-800/70 border border-gray-700">
+                                    <CardHeader className="mb-4">
+                                        <div className={`${feature.color} mb-2`}>{feature.icon}</div>
+                                        <CardTitle className="text-white">{feature.title}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-gray-400">{feature.description}</p>
+                                    </CardContent>
+                                </Card>
                             </FadeInOnScroll>
                         ))}
                     </div>
@@ -206,13 +213,15 @@ const HomePage = () => {
                             }
                         ].map((step, index) => (
                             <FadeInOnScroll key={index} className={`delay-${(index + 1) * 100}`}>
-                                <div className="bg-gray-800/50 p-8 rounded-xl border border-gray-700 text-center h-full">
-                                    <div className="text-cyan-400 mb-4 mx-auto w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-2xl font-bold">
+                                <Card className="bg-gray-800/50 border border-gray-700 text-center h-full">
+                                    <CardHeader className="text-cyan-400 mb-4 mx-auto w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center text-2xl font-bold">
                                         {step.step}
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white mb-3">{step.title}</h3>
-                                    <p className="text-gray-400">{step.description}</p>
-                                </div>
+                                    </CardHeader>
+                                    <CardTitle className="text-xl font-bold text-white mb-3">{step.title}</CardTitle>
+                                    <CardContent>
+                                        <p className="text-gray-400">{step.description}</p>
+                                    </CardContent>
+                                </Card>
                             </FadeInOnScroll>
                         ))}
                     </div>
@@ -233,12 +242,13 @@ const HomePage = () => {
                         </p>
                     </FadeInOnScroll>
                     <FadeInOnScroll className="delay-200">
-                        <button
+                        <Button
                             onClick={() => navigate('/register')}
+                            size="lg"
                             className="bg-white text-blue-700 hover:text-blue-800 px-10 py-4 rounded-full text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
                         >
                             Get Started Now
-                        </button>
+                        </Button>
                     </FadeInOnScroll>
                 </div>
             </section>

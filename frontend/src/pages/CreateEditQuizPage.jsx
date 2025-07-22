@@ -6,6 +6,10 @@ import { useAuth } from '../contexts/AuthContext';
 import LoadingSpinner from '../components/LoadingSpinner';
 import api from '../api/axiosInstance';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { Label } from '../components/ui/Label';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../components/ui/Card';
 
 const CreateEditQuizPage = () => {
     const { currentUser, loadingAuth, showMessage } = useAuth();
@@ -160,177 +164,168 @@ const CreateEditQuizPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="classic-bg min-h-screen py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-7xl mx-auto">
-                <h1 className="text-4xl font-bold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                <h1 className="text-4xl font-extrabold text-center mb-8 text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-500 drop-shadow-lg">
                     {quizIdToEdit ? 'Edit Quiz' : 'Create New Quiz'}
                 </h1>
-                
-                <form onSubmit={handleSubmit(onSubmit)} className="bg-gray-800/70 backdrop-blur-sm p-8 rounded-xl shadow-xl w-full max-w-3xl mx-auto border border-gray-700 space-y-6">
-                    {/* Quiz Details Section */}
-                    <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="title">Quiz Title</label>
-                        <input
-                            type="text"
-                            id="title"
-                            {...register('title')}
-                            placeholder="e.g., General Knowledge Quiz"
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                        />
-                        {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
-                    </div>
-                    
-                    <div>
-                        <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="description">Description</label>
-                        <textarea
-                            id="description"
-                            {...register('description')}
-                            rows="3"
-                            placeholder="A brief description of the quiz..."
-                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                        ></textarea>
-                        {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>}
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="category">Category</label>
-                            <input
-                                type="text"
-                                id="category"
-                                {...register('category')}
-                                placeholder="e.g., Science, History"
-                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                            />
-                            {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category.message}</p>}
-                        </div>
-                        <div>
-                            <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor="duration">Duration (minutes)</label>
-                            <input
-                                type="number"
-                                id="duration"
-                                {...register('duration', { valueAsNumber: true })}
-                                min="1"
-                                className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                            />
-                            {errors.duration && <p className="text-red-400 text-xs mt-1">{errors.duration.message}</p>}
-                        </div>
-                    </div>
-
-                    {/* AI Question Generation */}
-                    <div className="text-center">
-                        <button
-                            type="button"
-                            onClick={generateQuestionsWithLLM}
-                            disabled={generatingQuestions}
-                            className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-3 rounded-md hover:from-purple-600 hover:to-blue-600 font-bold shadow-md flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:-translate-y-1"
-                        >
-                            {generatingQuestions ? (
-                                <>
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Generating...
-                                </>
-                            ) : (
-                                '✨ Generate up to 10 Questions with AI'
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                    <Card className="bg-gray-900/80 backdrop-blur-2xl p-8 rounded-3xl shadow-2xl w-full max-w-3xl mx-auto border border-purple-700/40 hover:border-pink-400/50 transition-all duration-300">
+                        <CardContent>
+                            {/* Quiz Details Section */}
+                            <div>
+                                <Label htmlFor="title">Quiz Title</Label>
+                                <Input
+                                    type="text"
+                                    id="title"
+                                    {...register('title')}
+                                    placeholder="e.g., General Knowledge Quiz"
+                                    className="mt-2"
+                                />
+                                {errors.title && <p className="text-red-400 text-xs mt-1">{errors.title.message}</p>}
+                            </div>
+                            <div>
+                                <Label htmlFor="description">Description</Label>
+                                <textarea
+                                    id="description"
+                                    {...register('description')}
+                                    rows="3"
+                                    placeholder="A brief description of the quiz..."
+                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent mt-2"
+                                ></textarea>
+                                {errors.description && <p className="text-red-400 text-xs mt-1">{errors.description.message}</p>}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <Label htmlFor="category">Category</Label>
+                                    <Input
+                                        type="text"
+                                        id="category"
+                                        {...register('category')}
+                                        placeholder="e.g., Science, History"
+                                        className="mt-2"
+                                    />
+                                    {errors.category && <p className="text-red-400 text-xs mt-1">{errors.category.message}</p>}
+                                </div>
+                                <div>
+                                    <Label htmlFor="duration">Duration (minutes)</Label>
+                                    <Input
+                                        type="number"
+                                        id="duration"
+                                        {...register('duration', { valueAsNumber: true })}
+                                        min="1"
+                                        className="mt-2"
+                                    />
+                                    {errors.duration && <p className="text-red-400 text-xs mt-1">{errors.duration.message}</p>}
+                                </div>
+                            </div>
+                            {/* AI Question Generation */}
+                            <div className="text-center mt-6">
+                                <Button
+                                    type="button"
+                                    onClick={generateQuestionsWithLLM}
+                                    disabled={generatingQuestions}
+                                    className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-3 rounded-md hover:from-pink-600 hover:to-purple-600 font-bold shadow-md flex items-center justify-center mx-auto disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 hover:-translate-y-1"
+                                >
+                                    {generatingQuestions ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Generating...
+                                        </>
+                                    ) : (
+                                        '✨ Generate up to 10 Questions with AI'
+                                    )}
+                                </Button>
+                            </div>
+                            {/* Questions Section */}
+                            <h2 className="text-2xl font-bold text-white mb-4 pt-4 border-t border-gray-700">Questions</h2>
+                            {questionsGeneratedSuccessfully && (
+                                <div className="bg-green-900/50 border border-green-600 text-green-400 px-4 py-3 rounded relative mb-4">
+                                    <strong className="font-bold">Success!</strong>
+                                    <span className="block sm:inline ml-2">Questions generated. Fill any missing details and save.</span>
+                                </div>
                             )}
-                        </button>
-                    </div>
-
-                    {/* Questions Section */}
-                    <h2 className="text-2xl font-bold text-white mb-4 pt-4 border-t border-gray-700">Questions</h2>
-                    
-                    {questionsGeneratedSuccessfully && (
-                        <div className="bg-green-900/50 border border-green-600 text-green-400 px-4 py-3 rounded relative mb-4">
-                            <strong className="font-bold">Success!</strong>
-                            <span className="block sm:inline ml-2">Questions generated. Fill any missing details and save.</span>
-                        </div>
-                    )}
-                    
-                    {errors.questions && <p className="text-red-400 text-sm mb-4">{errors.questions.message}</p>}
-
-                    {questions.map((question, qIndex) => (
-                        <div key={qIndex} className="border border-gray-700 p-5 rounded-xl bg-gray-800/50 space-y-4 shadow-sm relative">
-                            <button
-                                type="button"
-                                onClick={() => removeQuestion(qIndex)}
-                                className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-1 w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
-                                aria-label="Remove question"
-                            >
-                                X
-                            </button>
-                            
-                            <div>
-                                <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor={`question-${qIndex}`}>Question {qIndex + 1} Text</label>
-                                <input
-                                    type="text"
-                                    id={`question-${qIndex}`}
-                                    {...register(`questions.${qIndex}.questionText`)}
-                                    placeholder="Enter question text"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                                />
-                                {errors.questions?.[qIndex]?.questionText && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].questionText.message}</p>}
-                            </div>
-                            
-                            <div className="space-y-2">
-                                <label className="block text-gray-300 text-sm font-semibold">Options</label>
-                                {question.options.map((option, oIndex) => (
-                                    <div key={oIndex}>
-                                        <input
+                            {errors.questions && <p className="text-red-400 text-sm mb-4">{errors.questions.message}</p>}
+                            {questions.map((question, qIndex) => (
+                                <Card key={qIndex} className="border border-gray-700 p-5 rounded-xl bg-gray-800/50 space-y-4 shadow-sm relative mb-6">
+                                    <Button
+                                        type="button"
+                                        onClick={() => removeQuestion(qIndex)}
+                                        variant="destructive"
+                                        className="absolute top-3 right-3 bg-red-500 text-white rounded-full p-1 w-7 h-7 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                                        aria-label="Remove question"
+                                    >
+                                        X
+                                    </Button>
+                                    <div>
+                                        <Label htmlFor={`question-${qIndex}`}>Question {qIndex + 1} Text</Label>
+                                        <Input
                                             type="text"
-                                            {...register(`questions.${qIndex}.options.${oIndex}`)}
-                                            placeholder={`Option ${oIndex + 1}`}
-                                            className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                                            id={`question-${qIndex}`}
+                                            {...register(`questions.${qIndex}.questionText`)}
+                                            placeholder="Enter question text"
+                                            className="mt-2"
                                         />
-                                        {errors.questions?.[qIndex]?.options?.[oIndex] && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].options[oIndex].message}</p>}
+                                        {errors.questions?.[qIndex]?.questionText && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].questionText.message}</p>}
                                     </div>
-                                ))}
+                                    <div className="space-y-2">
+                                        <Label>Options</Label>
+                                        {question.options.map((option, oIndex) => (
+                                            <Input
+                                                key={oIndex}
+                                                type="text"
+                                                {...register(`questions.${qIndex}.options.${oIndex}`)}
+                                                placeholder={`Option ${oIndex + 1}`}
+                                                className="mt-2"
+                                            />
+                                        ))}
+                                        {errors.questions?.[qIndex]?.options && errors.questions[qIndex].options.map((err, oIndex) => err && <p key={oIndex} className="text-red-400 text-xs mt-1">{err.message}</p>)}
+                                    </div>
+                                    <div>
+                                        <Label htmlFor={`correct-answer-${qIndex}`}>Correct Answer</Label>
+                                        <Input
+                                            type="text"
+                                            id={`correct-answer-${qIndex}`}
+                                            {...register(`questions.${qIndex}.correctAnswer`)}
+                                            placeholder="Enter the correct option text"
+                                            className="mt-2"
+                                        />
+                                        {errors.questions?.[qIndex]?.correctAnswer && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].correctAnswer.message}</p>}
+                                    </div>
+                                </Card>
+                            ))}
+                            {/* Add Question Button */}
+                            <Button
+                                type="button"
+                                onClick={addQuestion}
+                                className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-md hover:from-pink-600 hover:to-purple-600 font-bold shadow-md flex items-center justify-center transition-all duration-300 hover:-translate-y-1"
+                            >
+                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Question
+                            </Button>
+                            {/* Action Buttons */}
+                            <div className="flex space-x-4 mt-6">
+                                <Button
+                                    type="submit"
+                                    className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-md hover:from-pink-600 hover:to-purple-600 font-bold text-lg transition-all duration-300 hover:-translate-y-1"
+                                >
+                                    {quizIdToEdit ? 'Update Quiz' : 'Create Quiz'}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    onClick={() => navigate('/dashboard')}
+                                    className="flex-1 bg-red-600 text-white py-3 rounded-md hover:bg-red-700 font-bold text-lg transition-colors duration-300 shadow-md border border-red-700"
+                                >
+                                    Cancel
+                                </Button>
                             </div>
-                            
-                            <div>
-                                <label className="block text-gray-300 text-sm font-semibold mb-2" htmlFor={`correct-answer-${qIndex}`}>Correct Answer</label>
-                                <input
-                                    type="text"
-                                    id={`correct-answer-${qIndex}`}
-                                    {...register(`questions.${qIndex}.correctAnswer`)}
-                                    placeholder="Enter the correct option text"
-                                    className="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-gray-200 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-                                />
-                                {errors.questions?.[qIndex]?.correctAnswer && <p className="text-red-400 text-xs mt-1">{errors.questions[qIndex].correctAnswer.message}</p>}
-                            </div>
-                        </div>
-                    ))}
-
-                    {/* Add Question Button */}
-                    <button
-                        type="button"
-                        onClick={addQuestion}
-                        className="w-full bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-md hover:from-blue-600 hover:to-cyan-600 font-bold shadow-md flex items-center justify-center transition-all duration-300 hover:-translate-y-1"
-                    >
-                        <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg>
-                        Add Question
-                    </button>
-
-                    {/* Action Buttons */}
-                    <div className="flex space-x-4 mt-6">
-                        <button
-                            type="submit"
-                            className="flex-1 bg-gradient-to-r from-blue-500 to-cyan-500 text-white py-3 rounded-md hover:from-blue-600 hover:to-cyan-600 font-bold text-lg transition-all duration-300 hover:-translate-y-1"
-                        >
-                            {quizIdToEdit ? 'Update Quiz' : 'Create Quiz'}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => navigate('/dashboard')}
-                            className="flex-1 bg-gray-600 text-white py-3 rounded-md hover:bg-gray-500 font-bold text-lg transition-colors duration-300"
-                        >
-                            Cancel
-                        </button>
-                    </div>
+                        </CardContent>
+                    </Card>
                 </form>
             </div>
         </div>
