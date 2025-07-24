@@ -1,8 +1,9 @@
+// backend/models/Question.js
 
 const mongoose = require('mongoose');
 
 const questionSchema = mongoose.Schema({
-    quizId: {
+    quizId: { // This links the question back to its parent quiz
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Quiz',
         required: true,

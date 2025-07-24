@@ -1,3 +1,5 @@
+// backend/models/Quiz.js
+
 const mongoose = require('mongoose');
 
 const quizSchema = mongoose.Schema({
@@ -19,28 +21,14 @@ const quizSchema = mongoose.Schema({
         required: [true, 'Please add a duration'],
         min: [1, 'Duration must be at least 1 minute'],
     },
+    // --- MAJOR CHANGE HERE: Questions now store ObjectId references ---
     questions: [
         {
-            questionText: {
-                type: String,
-                required: [true, 'Please add question text'],
-            },
-            options: {
-                type: [String],
-                required: [true, 'Please add options'],
-                validate: {
-                    validator: function (v) {
-                        return v && v.length >= 2;
-                    },
-                    message: 'Each question must have at least two options.'
-                }
-            },
-            correctAnswer: {
-                type: String,
-                required: [true, 'Please specify the correct answer'],
-            },
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Question' // This explicitly links to the 'Question' model/collection
         }
     ],
+    // --- END MAJOR CHANGE ---
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
