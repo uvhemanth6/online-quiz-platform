@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 // This assumes your Node.js backend is running on port 5000
-const API_BASE_URL = 'https://online-quiz-platform-backend-v18x.onrender.com/api';
+const API_BASE_URL = 'https://online-quiz-platform-backend-kad2.onrender.com/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL,
