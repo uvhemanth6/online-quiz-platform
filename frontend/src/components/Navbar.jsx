@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 // FIX: Correct import path for shadcn/ui Button
-import { Button } from './ui/button'; // Assuming it's in src/components/ui/button.jsx
+import { Button } from './ui/Button'; // Assuming it's in src/components/ui/button.jsx
 
 const NavBar = () => {
     const { isAuthenticated, logout, user } = useAuth();
