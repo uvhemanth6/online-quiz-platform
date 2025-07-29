@@ -1,40 +1,30 @@
+// frontend/src/components/NavBar.jsx // Main navigation bar with Shadcn Button
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from './ui/Button';
+// FIX: Correct import path for shadcn/ui Button
+import { Button } from './ui/button'; // Assuming it's in src/components/ui/button.jsx
 
 const NavBar = () => {
     const { isAuthenticated, logout, user } = useAuth();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+    // handleNavigation is simplified as Link components handle most navigation now
     const handleNavigation = (path) => {
         navigate(path);
-        setIsMobileMenuOpen(false);
+        setIsMobileMenuOpen(false); // Close mobile menu on navigation
     };
 
     const handleLogout = () => {
         logout();
         navigate('/login');
-        setIsMobileMenuOpen(false);
+        setIsMobileMenuOpen(false); // Close mobile menu on logout
     };
 
-    // Close mobile menu when clicking outside
-    const handleClickOutside = (e) => {
-        if (!e.target.closest('.nav-container')) {
-            setIsMobileMenuOpen(false);
-        }
-    };
-
-    // Add event listener for outside clicks
-    React.useEffect(() => {
-        if (isMobileMenuOpen) {
-            document.addEventListener('click', handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener('click', handleClickOutside);
-        };
-    }, [isMobileMenuOpen]);
+    // Removed handleClickOutside and its useEffect for simplicity and robustness.
+    // Menu closing is now handled by onClick on Link/Button components.
 
     return (
         <nav className="bg-gradient-to-r from-indigo-900 via-purple-900 to-pink-900 animate-gradient-x bg-[length:400%_400%] text-white sticky top-0 z-40 shadow-lg">
@@ -69,7 +59,7 @@ const NavBar = () => {
                         <Link to="/" className="hover:text-primary-200 transition-colors duration-200">
                             Home
                         </Link>
-                        
+
                         {isAuthenticated ? (
                             <>
                                 <Link to="/dashboard" className="hover:text-primary-200 transition-colors duration-200">
@@ -82,6 +72,7 @@ const NavBar = () => {
                                 )}
                                 <div className="flex items-center space-x-4">
                                     <span className="text-primary-100">Hi, {user?.name || 'User'}</span>
+                                    {/* Using Shadcn Button component */}
                                     <Button
                                         onClick={handleLogout}
                                         className="bg-pink-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-semibold"
@@ -95,6 +86,7 @@ const NavBar = () => {
                                 <Link to="/login" className="hover:text-primary-200 transition-colors duration-200">
                                     Login
                                 </Link>
+                                {/* Using Shadcn Button component */}
                                 <Button
                                     onClick={() => handleNavigation('/register')}
                                     className="bg-pink-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors duration-200 font-semibold"
@@ -107,63 +99,68 @@ const NavBar = () => {
                 </div>
 
                 {/* Mobile Menu Dropdown */}
-                <div className={`nav-container lg:hidden ${isMobileMenuOpen ? 'block' : 'hidden'} mt-4 pb-4`}>
-                    <div className="flex flex-col space-y-4">
-                        <Link 
-                            to="/" 
-                            className="py-2 hover:text-primary-200 transition-colors duration-200"
-                            onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                            Home
-                        </Link>
-                        
-                        {isAuthenticated ? (
-                            <>
-                                <Link 
-                                    to="/dashboard" 
-                                    className="py-2 hover:text-primary-200 transition-colors duration-200"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Dashboard
-                                </Link>
-                                {user?.role === 'admin' && (
-                                    <Link 
-                                        to="/create-quiz" 
+                {/* FIX: Conditional rendering based on isMobileMenuOpen state */}
+                {isMobileMenuOpen && (
+                    <div className="nav-container lg:hidden mt-4 pb-4">
+                        <div className="flex flex-col space-y-4">
+                            <Link
+                                to="/"
+                                className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                Home
+                            </Link>
+
+                            {isAuthenticated ? (
+                                <>
+                                    <Link
+                                        to="/dashboard"
                                         className="py-2 hover:text-primary-200 transition-colors duration-200"
                                         onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        Create Quiz
+                                        Dashboard
                                     </Link>
-                                )}
-                                <div className="pt-2 border-t border-primary-700">
-                                    <span className="block py-2 text-primary-100">Logged in as {user?.name || 'User'}</span>
-                                    <Button
-                                        onClick={handleLogout}
-                                        className="w-full bg-pink-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors duration-200 font-semibold"
+                                    {user?.role === 'admin' && (
+                                        <Link
+                                            to="/create-quiz"
+                                            className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                        >
+                                            Create Quiz
+                                        </Link>
+                                    )}
+                                    <div className="pt-2 border-t border-primary-700">
+                                        <span className="block py-2 text-primary-100">Logged in as {user?.name || 'User'}</span>
+                                        {/* Using Shadcn Button component */}
+                                        <Button
+                                            onClick={handleLogout}
+                                            className="w-full bg-pink-600 hover:bg-purple-700 text-white py-2 rounded-lg transition-colors duration-200 font-semibold"
+                                        >
+                                            Logout
+                                        </Button>
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <Link
+                                        to="/login"
+                                        className="py-2 hover:text-primary-200 transition-colors duration-200"
+                                        onClick={() => setIsMobileMenuOpen(false)}
                                     >
-                                        Logout
+                                        Login
+                                    </Link>
+                                    {/* Using Shadcn Button component */}
+                                    <Button
+                                        onClick={() => { handleNavigation('/register'); }}
+                                        className="w-full bg-pink-600 hover:bg-purple-700 text-white py-2 text-center rounded-lg transition-colors duration-200 font-semibold"
+                                    >
+                                        Register
                                     </Button>
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <Link 
-                                    to="/login" 
-                                    className="py-2 hover:text-primary-200 transition-colors duration-200"
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                >
-                                    Login
-                                </Link>
-                                <Button 
-                                    onClick={() => { handleNavigation('/register'); setIsMobileMenuOpen(false); }}
-                                    className="bg-pink-600 hover:bg-purple-700 text-white py-2 text-center rounded-lg transition-colors duration-200 font-semibold"
-                                >
-                                    Register
-                                </Button>
-                            </>
-                        )}
+                                </>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </nav>
     );
