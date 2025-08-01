@@ -67,7 +67,7 @@ Google Gemini API Key
 
 ⚡ Quick Start
 1. Clone the Repository
-bashgit clone https://github.com/uvhemanth6/online-quiz-platform
+bashgit clone (https://github.com/uvhemanth6/online-quiz-platform.git)
 cd edubot-quiz-platform
 2. Backend Setup
 bash# Navigate to backend directory
