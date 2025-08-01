@@ -67,7 +67,7 @@ Google Gemini API Key
 
 ⚡ Quick Start
 1. Clone the Repository
-bashgit clone https://github.com/yourusername/edubot-quiz-platform.git
+bashgit clone https://github.com/uvhemanth6/online-quiz-platform
 cd edubot-quiz-platform
 2. Backend Setup
 bash# Navigate to backend directory
@@ -191,7 +191,7 @@ Environment Variables for Production
 envNODE_ENV=production
 MONGO_URI=your_mongodb_atlas_connection_string
 JWT_SECRET=your_production_jwt_secret
-FRONTEND_URL=https://your-frontend-domain.com
+FRONTEND_URL=(https://online-quiz-platform-e6ca.onrender.com/)
 🤝 Contributing
 We welcome contributions! Please follow these steps:
 
